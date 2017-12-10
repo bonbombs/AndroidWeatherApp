@@ -1,14 +1,8 @@
 package com.example.kelly.weatherapp;
 
-import android.util.Log;
-
 import com.google.android.gms.awareness.state.Weather;
-
 import org.json.JSONObject;
-
 import java.io.IOException;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by Kelly on 12/4/2017.
