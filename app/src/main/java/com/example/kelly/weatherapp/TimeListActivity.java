@@ -17,8 +17,28 @@ public class TimeListActivity extends AppCompatActivity {
     }
 
     public void onClickTime(View v) {
-        // TODO: Change time based on which button was clicked
-        sendResult(Activity.RESULT_OK, 3);
+        switch (v.getId()) {
+            case R.id.never:
+                sendResult(Activity.RESULT_OK, 0);
+                break;
+            case R.id.one_hour:
+                sendResult(Activity.RESULT_OK, 1);
+                break;
+            case R.id.three_hours:
+                sendResult(Activity.RESULT_OK, 3);
+                break;
+            case R.id.six_hours:
+                sendResult(Activity.RESULT_OK, 6);
+                break;
+            case R.id.twelve_hours:
+                sendResult(Activity.RESULT_OK, 12);
+                break;
+            case R.id.twentyfour_hours:
+                sendResult(Activity.RESULT_OK, 24);
+                break;
+            default:
+                sendResult(Activity.RESULT_OK, 0);
+        }
     }
 
     private void sendResult(int resultCode, int time) {

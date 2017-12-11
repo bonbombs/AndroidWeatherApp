@@ -1,6 +1,10 @@
 package com.example.kelly.weatherapp;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,10 +25,12 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import com.google.android.gms.awareness.state.Weather;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -43,6 +49,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -54,6 +61,13 @@ public class MainActivity extends AppCompatActivity {
     private final int MAIN_ACTIVITY_LISTENER_ID = 0;
     private final int PERMISSIONS_REQUEST_GETWEATHER = 0;
     private final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
+    private final int NOTIFICATION_FREQUENCY_REQUEST_CODE = 2;
+
+    public static final String EXTRA_NOTIFY_TIME = "notificationTimeInterval";
+
+    private final Activity a = this;
+
+    private SharedPreferences sharedPref;
 
     private int mPreferredUnit = Weather.CELSIUS;
     private boolean mUseGPS = true;
@@ -123,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
                 UpdateHomeUI();
                 break;
             case NOTIFICATIONS:
-                //TODO: Logic & UI for Notifications
+                InitNotifications();
                 break;
             case SETTINGS:
                 InitSettings();
@@ -146,6 +160,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         updateValuesFromBundle(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
 
         mSwipeContainer = findViewById(R.id.swipeContainer);
         mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -199,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitSettings() {
-        final SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         Switch unitSwitch = findViewById(R.id.settings_unit_pref);
         Switch gpsSwitch = findViewById(R.id.settings_use_gps);
         unitSwitch.setChecked(sharedPref.getBoolean(getString(R.string.preference_unit), true));
@@ -275,6 +290,137 @@ public class MainActivity extends AppCompatActivity {
         });
 
         UpdateSettingsUI();
+    }
+
+    private void InitNotifications() {
+        // Put in notification settings user already set / defaults
+        Switch alarmSwitch = findViewById(R.id.notifications_alarms);
+        CheckBox currentWeather = findViewById(R.id.current_weather);
+        CheckBox clothingRecommendations = findViewById(R.id.clothing_recommendations);
+        CheckBox significantChanges = findViewById(R.id.significant_changes);
+        TextView alarmFrequency = findViewById(R.id.alarm_frequency);
+        final TextView beginningTime = findViewById(R.id.beginning_time);
+        final TextView endTime = findViewById(R.id.end_time);
+
+
+        alarmSwitch.setChecked(sharedPref.getBoolean("notifications_alarms", false));
+        currentWeather.setChecked(sharedPref.getBoolean("notifications_current_weather", true));
+        clothingRecommendations.setChecked(sharedPref.getBoolean("notifications_clothing_recommendations", false));
+        significantChanges.setChecked(sharedPref.getBoolean("notifications_significant_changes", false));
+        alarmFrequency.setText(sharedPref.getString("notifications_alarm_frequency", "Never"));
+        beginningTime.setText(sharedPref.getString("notifications_beginning_time", "12:00AM"));
+        endTime.setText(sharedPref.getString("notifications_end_time", "12:00PM"));
+
+        alarmSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                sharedPref.edit().putBoolean("notifications_alarms", b).apply();
+            }
+        });
+
+        currentWeather.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                sharedPref.edit().putBoolean("notifications_current_weather", b).apply();
+            }
+        });
+
+        clothingRecommendations.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                sharedPref.edit().putBoolean("notifications_clothing_recommendations", b).apply();
+            }
+        });
+
+        significantChanges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                sharedPref.edit().putBoolean("notifications_significant_changes", b).apply();
+            }
+        });
+
+        LinearLayout alarmNotifications = findViewById(R.id.notifications_alarm_hours);
+        alarmNotifications.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(a, TimeListActivity.class);
+                startActivityForResult(i, NOTIFICATION_FREQUENCY_REQUEST_CODE);
+            }
+        });
+
+        beginningTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Calendar mCurrentTime = Calendar.getInstance();
+                int hour = mCurrentTime.get(Calendar.HOUR_OF_DAY);
+                int minute = mCurrentTime.get(Calendar.MINUTE);
+                TimePickerDialog mTimePicker;
+                mTimePicker = new TimePickerDialog(a, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                        String AM_PM ;
+                        if(selectedHour < 12) {
+                            AM_PM = "AM";
+                        } else {
+                            AM_PM = "PM";
+                        }
+
+                        if(selectedHour > 12) {
+                            selectedHour = selectedHour - 12;
+                        }
+
+                        String time;
+                        if(selectedMinute == 0) {
+                            time = selectedHour + ":00" + AM_PM;
+                        }
+                        else {
+                            time = selectedHour + ":" + selectedMinute + AM_PM;
+                        }
+                        sharedPref.edit().putString("notifications_beginning_time", time).apply();
+                        beginningTime.setText(time);
+                    }
+                }, hour, minute, false);
+                mTimePicker.setTitle("Select Time");
+                mTimePicker.show();
+            }
+        });
+
+        endTime.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Calendar mCurrentTime = Calendar.getInstance();
+                int hour = mCurrentTime.get(Calendar.HOUR_OF_DAY);
+                int minute = mCurrentTime.get(Calendar.MINUTE);
+                TimePickerDialog mTimePicker;
+                mTimePicker = new TimePickerDialog(a, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                        String AM_PM ;
+                        if(selectedHour < 12) {
+                            AM_PM = "AM";
+                        } else {
+                            AM_PM = "PM";
+                        }
+
+                        if(selectedHour > 12) {
+                            selectedHour = selectedHour - 12;
+                        }
+
+                        String time;
+                        if(selectedMinute == 0) {
+                            time = selectedHour + ":00" + AM_PM;
+                        }
+                        else {
+                            time = selectedHour + ":" + selectedMinute + AM_PM;
+                        }
+                        sharedPref.edit().putString("notifications_end_time", time).apply();
+                        endTime.setText(time);
+                    }
+                }, hour, minute, false);
+                mTimePicker.setTitle("Select Time");
+                mTimePicker.show();
+            }
+        });
     }
 
     private void InitMainScreen() {
@@ -445,6 +591,65 @@ public class MainActivity extends AppCompatActivity {
 
             } else if (resultCode == RESULT_CANCELED) {
                 // The user canceled the operation.
+            }
+        }
+
+        if (requestCode == NOTIFICATION_FREQUENCY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                int timeInterval = data.getIntExtra(EXTRA_NOTIFY_TIME, 0);
+                TextView alarmFrequency = findViewById(R.id.alarm_frequency);
+
+                if (timeInterval == 0) {
+                    sharedPref.edit().putString("notifications_alarm_frequency", "Never").apply();
+                }
+                else if (timeInterval == 1) {
+                    sharedPref.edit().putString("notifications_alarm_frequency", "every 1 hour").apply();
+                }
+                else {
+                    sharedPref.edit().putString("notifications_alarm_frequency", "every " + timeInterval + " hours").apply();
+                }
+
+                // Set a repeating alarm based on the user's preference
+                Intent notificationIntent = new Intent(this.getBaseContext(), NotificationService.class);
+                PendingIntent contentIntent = PendingIntent.getService(this.getBaseContext(), 0, notificationIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT);
+
+                AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                am.cancel(contentIntent);
+
+                switch (timeInterval) {
+                    case 0:
+                        alarmFrequency.setText("Never");
+                        break;
+                    case 1:
+                        alarmFrequency.setText("every 1 hour");
+                        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()
+                                + AlarmManager.INTERVAL_HOUR, AlarmManager.INTERVAL_HOUR, contentIntent);
+                        break;
+                    case 3:
+                        alarmFrequency.setText("every 3 hours");
+                        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()
+                                + AlarmManager.INTERVAL_HOUR * 3, AlarmManager.INTERVAL_HOUR * 3, contentIntent);
+                        break;
+                    case 6:
+                        alarmFrequency.setText("every 6 hours");
+                        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()
+                                + AlarmManager.INTERVAL_HOUR * 6, AlarmManager.INTERVAL_HOUR * 6, contentIntent);
+                        break;
+                    case 12:
+                        alarmFrequency.setText("every 12 hours");
+                        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()
+                                + AlarmManager.INTERVAL_HALF_DAY, AlarmManager.INTERVAL_HALF_DAY, contentIntent);
+                        break;
+                    case 24:
+                        alarmFrequency.setText("every 24 hours");
+                        am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()
+                                + AlarmManager.INTERVAL_DAY, AlarmManager.INTERVAL_DAY , contentIntent);
+                        break;
+                    default:
+                        alarmFrequency.setText("Never");
+                        break;
+                }
             }
         }
     }

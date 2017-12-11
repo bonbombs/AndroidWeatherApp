@@ -9,57 +9,88 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="@dimen/setting_option_margin"
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/time1"
+            android:id="@+id/never"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="1 hour"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="Never"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="24sp"
-            android:clickable = "true"
-            android:onClick = "onClickTime"/>
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
 
         <TextView
-            android:id="@+id/time2"
+            android:id="@+id/one_hour"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="3 hours"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="every 1 hour"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="24sp"
-            android:clickable = "true"
-            android:onClick = "onClickTime"/>
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
 
         <TextView
-            android:id="@+id/time3"
+            android:id="@+id/three_hours"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="6 hours"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="every 3 hours"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="24sp"
-            android:clickable = "true"
-            android:onClick = "onClickTime"/>
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
 
         <TextView
-            android:id="@+id/time4"
+            android:id="@+id/six_hours"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="12 hours"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="every 6 hours"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="24sp"
-            android:clickable = "true"
-            android:onClick = "onClickTime"/>
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
 
         <TextView
-            android:id="@+id/time5"
+            android:id="@+id/twelve_hours"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:text="24 hours"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="every 12 hours"
             android:textAppearance="@style/TextAppearance.AppCompat"
-            android:textSize="24sp"
-            android:clickable = "true"
-            android:onClick = "onClickTime"/>
+            android:textSize="18sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
+
+        <TextView
+            android:id="@+id/twentyfour_hours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onClickTime"
+            android:text="every 24 hours"
+            android:textAppearance="@style/TextAppearance.AppCompat"
+            android:textSize="18sp" />
 
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

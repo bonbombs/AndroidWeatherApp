@@ -40,7 +40,8 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".PreferencesActivity" />
+        <service android:name=".NotificationService" />
+
         <activity android:name=".TimeListActivity"/>
     </application>
 

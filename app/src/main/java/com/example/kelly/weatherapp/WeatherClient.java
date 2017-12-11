@@ -323,7 +323,7 @@ public class WeatherClient {
     public static List<WeatherData> GetHourlyWeather() {
         WeatherClient client = GetInstance();
         client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
-        if (client.cachedHourlyWeather != null && !client.mCurrentConfig.isDirty) {
+        if (client.cachedHourlyWeather != null && !client.mCurrentConfig.isDirty && client.cachedCurrentWeather != null) {
             long timeBefore = client.cachedCurrentWeather.timeCalculated;
             if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
                 client.CallRequest();
