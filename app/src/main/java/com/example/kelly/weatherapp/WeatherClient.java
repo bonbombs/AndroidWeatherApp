@@ -345,6 +345,13 @@ public class WeatherClient {
             GetInstance().onHourlyWeatherDataReceivedListeners.put(id, listener);
     }
 
+    public static void removeListeners(int id) {
+        if (GetInstance().onCurrentWeatherDataReceivedListeners.get(id) != null)
+            GetInstance().onCurrentWeatherDataReceivedListeners.remove(id);
+        if (GetInstance().onHourlyWeatherDataReceivedListeners.get(id) != null)
+            GetInstance().onHourlyWeatherDataReceivedListeners.remove(id);
+    }
+
     public interface OnCurrentWeatherDataReceivedListener {
         void onDataLoaded(WeatherData data);
         void onDataError(Throwable t);
