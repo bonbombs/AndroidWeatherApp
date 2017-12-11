@@ -20,11 +20,19 @@ public class RecommendationService {
     private int MAX_3HOURS_LOOK_AHEAD = 2;                  // Openweather gives us forecasts every 3 hrs so we're measuring in iterations
     private Dictionary<Integer, Float> mSeverityMap;
 
+    private List<String> DummyWardrobeRecommendations;
+
     //TODO: Class or data structure for wardrobe
     //TODO: Class for temp prefs
 
     private RecommendationService() {
+
         ConstructSeverityMap();
+
+        DummyWardrobeRecommendations = new ArrayList<>();
+        DummyWardrobeRecommendations.add("Hat");
+        DummyWardrobeRecommendations.add("Socks");
+        DummyWardrobeRecommendations.add("Boots");
     }
 
     private void ConstructSeverityMap() {
@@ -77,7 +85,7 @@ public class RecommendationService {
 
     public static List<String> GetRecommendedWardrobe() {
         // TODO Return value subject to change
-        return new ArrayList<>();
+        return GetInstance().DummyWardrobeRecommendations;
     }
 
     public static String GetAlert() {

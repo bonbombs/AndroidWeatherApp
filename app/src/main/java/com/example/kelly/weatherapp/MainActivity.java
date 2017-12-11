@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mHumidityView;
     private TextView mWindView;
     private HourlyWeatherAdapter mHourlyWeatherAdapter;
+    private ClothingRecommendationsAdapter mClothingRecommendationAdapter;
     private SwipeRefreshLayout mSwipeContainer;
 
     private WeatherClient mClient;
@@ -137,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         if (mCachedPlace != null)
             sharedPref.edit().putString(getString(R.string.preference_location), mCachedPlace.getId()).apply();
         sharedPref.edit().putBoolean(getString(R.string.preference_use_gps), mUseGPS).apply();
+        WeatherClient.removeListeners(MAIN_ACTIVITY_LISTENER_ID);
         super.onPause();
     }
 
@@ -286,11 +289,17 @@ public class MainActivity extends AppCompatActivity {
         mWindView = findViewById(R.id.windView);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        LinearLayoutManager layoutManager
+        LinearLayoutManager layoutManagerWeather
+                = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+
+        LinearLayoutManager layoutManagerClothing
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
 
         RecyclerView hourlyWeatherView = findViewById(R.id.hourlyWeatherView);
-        hourlyWeatherView.setLayoutManager(layoutManager);
+        RecyclerView clothingRecommendationView = findViewById(R.id.clothingRecommendationView);
+
+        hourlyWeatherView.setLayoutManager(layoutManagerWeather);
+        clothingRecommendationView.setLayoutManager(layoutManagerClothing);
 
         checkPermissions();
 
@@ -359,6 +368,17 @@ public class MainActivity extends AppCompatActivity {
                 hourlyWeatherView.setAdapter(mHourlyWeatherAdapter);
             mHourlyWeatherAdapter.mWeatherList = mHourlyWeatherData;
             mHourlyWeatherAdapter.notifyDataSetChanged();
+        }
+
+        List<String> clothes = RecommendationService.GetRecommendedWardrobe();
+        if (clothes != null) {
+            RecyclerView clothingRecommendationView = findViewById(R.id.clothingRecommendationView);
+            if (mClothingRecommendationAdapter == null)
+                mClothingRecommendationAdapter = new ClothingRecommendationsAdapter(clothes);
+            if (clothingRecommendationView.getAdapter() == null)
+                clothingRecommendationView.setAdapter(mClothingRecommendationAdapter);
+            mClothingRecommendationAdapter.mRecommendedClothes = clothes;
+            mClothingRecommendationAdapter.notifyDataSetChanged();
         }
 
         TextView unitView = findViewById(R.id.tempUnit);
@@ -541,6 +561,59 @@ public class MainActivity extends AppCompatActivity {
         public int getItemCount() {
             if (mWeatherList.size() < MAX_ITEMS_TO_DISPLAY)
                 return mWeatherList.size();
+            else
+                return MAX_ITEMS_TO_DISPLAY;
+        }
+    }
+
+    /**
+     * Hourly Weather RecyclerView elements
+     */
+    public class ClothingRecommendationsAdapter extends RecyclerView.Adapter<ClothingRecommendationsAdapter.ClothingRecommendationItem> {
+
+        private final int MAX_ITEMS_TO_DISPLAY = 4;
+        private List<String> mRecommendedClothes;
+
+        public class ClothingRecommendationItem extends RecyclerView.ViewHolder {
+
+            ImageView mIcon;
+            TextView mClothingText;
+
+            public ClothingRecommendationItem(View view) {
+                super(view);
+                // TODO: grab icon and name views
+                mIcon = view.findViewById(R.id.clothing_icon);
+                mClothingText = view.findViewById(R.id.clothing_name);
+            }
+
+            public void Bind(String data) {
+                // TODO: set icon based on data
+                mClothingText.setText(data);
+            }
+        }
+
+
+        public ClothingRecommendationsAdapter(List<String> clothingList) {
+            // TODO: set list of clothes to display
+            mRecommendedClothes = clothingList;
+        }
+
+        @Override
+        public ClothingRecommendationItem onCreateViewHolder(ViewGroup parent, int viewType) {
+            View itemView = LayoutInflater.from(getBaseContext())
+                    .inflate(R.layout.clothing_recommendation_item_view, parent, false);
+            return new ClothingRecommendationItem(itemView);
+        }
+
+        @Override
+        public void onBindViewHolder(final ClothingRecommendationItem holder, final int position) {
+            holder.Bind(mRecommendedClothes.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            if (mRecommendedClothes.size() < MAX_ITEMS_TO_DISPLAY)
+                return mRecommendedClothes.size();
             else
                 return MAX_ITEMS_TO_DISPLAY;
         }
