@@ -4,10 +4,7 @@ import com.google.android.gms.awareness.state.Weather;
 
 import org.json.JSONObject;
 
-import java.sql.Time;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,16 +56,7 @@ public class WeatherData implements Weather {
         this.mTemp = temp;
         this.mTempMax = tempMax;
         this.mTempMin = tempMin;
-        switch (unit) {
-            case CELSIUS:
-                mTempUnit = CELSIUS;
-                break;
-            case FAHRENHEIT:
-                mTempUnit = FAHRENHEIT;
-                break;
-            default:
-                mTempUnit = KELVIN;
-        }
+        this.mTempUnit = unit;
     }
 
     public void setHumidity(int value) {
@@ -136,18 +124,18 @@ public class WeatherData implements Weather {
         switch (i) {
             case CELSIUS:
                 if (mTempUnit == CELSIUS) return mTemp;
-                else if (mTempUnit == FAHRENHEIT) return (mTempUnit - 32f) * (5/9);
+                else if (mTempUnit == FAHRENHEIT) return (mTemp - 32f) * (5/9);
                 else if (mTempUnit == KELVIN) return mTemp - KELVIN_CONVERSION;
                 break;
             case FAHRENHEIT:
                 if (mTempUnit == CELSIUS) return mTemp * (9/5) + 32;
-                else if (mTempUnit == FAHRENHEIT) return mTempUnit;
-                else if (mTempUnit == KELVIN) return mTempUnit * (9/5) - 459.67f;
+                else if (mTempUnit == FAHRENHEIT) return mTemp;
+                else if (mTempUnit == KELVIN) return mTemp * (9/5) - 459.67f;
                 break;
             case KELVIN:
                 if (mTempUnit == CELSIUS) return mTemp + KELVIN_CONVERSION;
-                else if (mTempUnit == FAHRENHEIT) return (mTempUnit + 457.67f) * (5/9);
-                else if (mTempUnit == KELVIN) return mTempUnit;
+                else if (mTempUnit == FAHRENHEIT) return (mTemp + 457.67f) * (5/9);
+                else if (mTempUnit == KELVIN) return mTemp;
                 break;
         }
         return -1;

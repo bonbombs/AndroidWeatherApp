@@ -1,18 +1,18 @@
 package com.example.kelly.weatherapp;
 
-import android.os.SystemClock;
-import android.provider.Settings;
 import android.util.Log;
+
+import com.google.android.gms.awareness.state.Weather;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.sql.Time;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
 
 import okhttp3.Call;
@@ -30,40 +30,63 @@ import static android.content.ContentValues.TAG;
 
 public class WeatherClient {
 
+    enum RequestMode {
+        CURRENT,
+        HOURLY,
+        PLACE
+    }
+
     public static final int CURRENT_FORECAST = 0;
     public static final int HOURLY_FORECAST = 1;
 
-    private static String API_KEY = "2be70096614a5f7120ab4f91929341ef";
+    public final long TIME_BEFORE_REPOLL = 1000L * 60;
+
+    private static String API_KEY = "";
 
     private static WeatherClient mInstance;
     private Request mRequest;
-    private String mCurrentCity = "4930956";    // Default is Boston
+    private String mCurrentCity;
     private String mCurrentLocation;
     private OkHttpClient mClient;
-    private WeatherConfig mCurrentConfig;
+    private WeatherConfig mCurrentConfig;;
 
     private WeatherData cachedCurrentWeather;
-    private List<OnWeatherDataReceivedListener> onWeatherDataReceivedListeners;
+    private List<WeatherData> cachedHourlyWeather;
+    private Dictionary<Integer, OnCurrentWeatherDataReceivedListener> onCurrentWeatherDataReceivedListeners;
+    private Dictionary<Integer, OnHourlyWeatherDataReceivedListener> onHourlyWeatherDataReceivedListeners;
 
     private WeatherClient() {
         mClient = new OkHttpClient();
-        mCurrentConfig = new WeatherConfig("4930956");
+        mCurrentCity = "4930956";
+        mCurrentConfig = new WeatherConfig(mCurrentCity);
         mRequest = UpdateRequest();
         mInstance = this;
-        onWeatherDataReceivedListeners = new ArrayList<>();
+        onCurrentWeatherDataReceivedListeners = new Hashtable<>();
+        onHourlyWeatherDataReceivedListeners = new Hashtable<>();
         //TODO: NOT SECURE
-        if (API_KEY == null)
+        if (API_KEY.isEmpty())
             API_KEY = "2be70096614a5f7120ab4f91929341ef";
     }
 
     private Request UpdateRequest() {
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://api.openweathermap.org/data/2.5/weather").newBuilder();
+        HttpUrl.Builder urlBuilder = null;
+        switch (mCurrentConfig.getRequestMode()) {
+            case HOURLY:
+                urlBuilder = HttpUrl.parse("http://api.openweathermap.org/data/2.5/forecast").newBuilder();
+                break;
+            case CURRENT:
+                urlBuilder = HttpUrl.parse("http://api.openweathermap.org/data/2.5/weather").newBuilder();
+                break;
+        }
         Log.d(TAG, "UpdateRequest: " + mCurrentConfig);
-        if (!mCurrentConfig.getCityID().isEmpty())
-            urlBuilder.addQueryParameter("id", mCurrentConfig.getCityID());
-        else {
-            urlBuilder.addQueryParameter("lat", String.valueOf(mCurrentConfig.getLatitude()));
-            urlBuilder.addQueryParameter("lon", String.valueOf(mCurrentConfig.getLongitude()));
+        urlBuilder.addQueryParameter("lat", String.valueOf(mCurrentConfig.getLatitude()));
+        urlBuilder.addQueryParameter("lon", String.valueOf(mCurrentConfig.getLongitude()));
+        switch (mCurrentConfig.getUnit()) {
+            case Weather.CELSIUS:
+                urlBuilder.addQueryParameter("units", "metric");
+                break;
+            case Weather.FAHRENHEIT:
+                urlBuilder.addQueryParameter("units", "imperial");
         }
         urlBuilder.addQueryParameter("APPID", API_KEY);
         Log.d(TAG, "UpdateRequest: " + API_KEY);
@@ -73,20 +96,108 @@ public class WeatherClient {
 
     private void CallRequest() {
         mRequest = UpdateRequest();
-        mClient.newCall(mRequest).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
+        switch (mCurrentConfig.getRequestMode()) {
+            case HOURLY:
+                mClient.newCall(mRequest).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        e.printStackTrace();
+                    }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                ParseResponse(response);
-            }
-        });
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        int Unit = mCurrentConfig.getUnit();
+                        ParseHourlyWeatherResponse(response, Unit);
+                    }
+                });
+                break;
+            case CURRENT:
+                mClient.newCall(mRequest).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        int Unit = mCurrentConfig.getUnit();
+                        ParseCurrentWeatherResponse(response, Unit);
+                    }
+                });
+                break;
+        }
     }
 
-    private void ParseResponse(Response res) throws IOException {
+    private void ParseHourlyWeatherResponse(Response res, int unit) throws IOException {
+        // Refer to https://openweathermap.org/current#current_JSON
+        try {
+            ArrayList<WeatherData> hourlyWeather = new ArrayList<>();
+            String responseData = res.body().string();
+            JSONObject json = new JSONObject(responseData);
+            Log.d("WL", json.toString());
+            JSONObject city = json.getJSONObject("city");
+            JSONArray list = json.getJSONArray("list");
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject listItem = list.getJSONObject(i);
+                JSONArray weatherInfo = listItem.getJSONArray("weather");
+                JSONObject tempInfo = listItem.getJSONObject("main");
+                JSONObject windInfo = listItem.getJSONObject("wind");
+                JSONObject cloudInfo = listItem.getJSONObject("clouds");
+
+                WeatherData currentWeather = new WeatherData();
+                currentWeather.setCity(
+                        city.getString("id"),
+                        city.getString("name")
+                );
+                currentWeather.setTemp(
+                        (float) tempInfo.getDouble("temp"),
+                        (float) tempInfo.getDouble("temp_max"),
+                        (float) tempInfo.getDouble("temp_min"),
+                        unit
+                );
+                for (int j = 0; j < weatherInfo.length(); j++) {
+                    JSONObject weather = weatherInfo.getJSONObject(j);
+                    Log.d(TAG, "ParseResponse: " + weather.toString());
+                    currentWeather.addCondition(weather);
+                }
+                currentWeather.setHumidity(
+                        tempInfo.getInt("humidity")
+                );
+                currentWeather.setPressure(
+                        (float) tempInfo.getDouble("pressure")
+                );
+                currentWeather.setCloud(
+                        cloudInfo.getInt("all")
+                );
+                currentWeather.setWind(
+                        (float) windInfo.getDouble("speed"),
+                        (float) windInfo.getDouble("deg")
+                );
+                if (json.has("rain")) {
+                    JSONObject rainInfo = listItem.getJSONObject("rain");
+                    currentWeather.setRain(
+                            (float) rainInfo.getDouble("3h")
+                    );
+                }
+                if (json.has("snow")) {
+                    JSONObject snowInfo = listItem.getJSONObject("snow");
+                    currentWeather.setSnow(
+                            (float) snowInfo.getDouble("3h")
+                    );
+                }
+                currentWeather.timeCalculated = listItem.getLong("dt");
+                hourlyWeather.add(currentWeather);
+            }
+            cachedHourlyWeather = hourlyWeather;
+            mCurrentConfig.isDirty = false;
+            EmitHourlyWeatherDataUpdateSuccess(hourlyWeather);
+        }
+        catch (JSONException e) {
+            EmitHourlyWeatherDataUpdateError(e);
+        }
+    }
+
+    private void ParseCurrentWeatherResponse(Response res, int unit) throws IOException {
         // Refer to https://openweathermap.org/current#current_JSON
         try {
             String responseData = res.body().string();
@@ -107,7 +218,7 @@ public class WeatherClient {
                     (float) tempInfo.getDouble("temp"),
                     (float) tempInfo.getDouble("temp_max"),
                     (float) tempInfo.getDouble("temp_min"),
-                    WeatherData.KELVIN
+                    unit
             );
             for (int i = 0; i < weatherInfo.length(); i++) {
                 JSONObject weather = weatherInfo.getJSONObject(i);
@@ -141,22 +252,38 @@ public class WeatherClient {
             }
             currentWeather.timeCalculated = json.getLong("dt");
             cachedCurrentWeather = currentWeather;
-            EmitWeatherDataUpdateSuccess(currentWeather);
+            mCurrentConfig.isDirty = false;
+            EmitCurrentWeatherDataUpdateSuccess(currentWeather);
         } catch (JSONException e) {
-            EmitWeatherDataUpdateError(e);
+            EmitCurrentWeatherDataUpdateError(e);
         }
     }
 
-    private void EmitWeatherDataUpdateSuccess(WeatherData newData) {
-        for (OnWeatherDataReceivedListener l : onWeatherDataReceivedListeners) {
-
-            l.onDataLoaded(newData);
+    private void EmitHourlyWeatherDataUpdateSuccess(List<WeatherData> newData) {
+        Enumeration<OnHourlyWeatherDataReceivedListener> listeners = onHourlyWeatherDataReceivedListeners.elements();
+        while(listeners.hasMoreElements()) {
+            listeners.nextElement().onDataLoaded(newData);
         }
     }
 
-    private void EmitWeatherDataUpdateError(Throwable t) {
-        for (OnWeatherDataReceivedListener l : onWeatherDataReceivedListeners) {
-            l.onDataError(t);
+    private void EmitHourlyWeatherDataUpdateError(Throwable t) {
+        Enumeration<OnHourlyWeatherDataReceivedListener> listeners = onHourlyWeatherDataReceivedListeners.elements();
+        while(listeners.hasMoreElements()) {
+            listeners.nextElement().onDataError(t);
+        }
+    }
+
+    private void EmitCurrentWeatherDataUpdateSuccess(WeatherData newData) {
+        Enumeration<OnCurrentWeatherDataReceivedListener> listeners = onCurrentWeatherDataReceivedListeners.elements();
+        while(listeners.hasMoreElements()) {
+            listeners.nextElement().onDataLoaded(newData);
+        }
+    }
+
+    private void EmitCurrentWeatherDataUpdateError(Throwable t) {
+        Enumeration<OnCurrentWeatherDataReceivedListener> listeners = onCurrentWeatherDataReceivedListeners.elements();
+        while(listeners.hasMoreElements()) {
+            listeners.nextElement().onDataError(t);
         }
     }
 
@@ -171,27 +298,60 @@ public class WeatherClient {
         return mInstance;
     }
 
+    public static WeatherConfig GetConfig() {
+        return GetInstance().mCurrentConfig;
+    }
+
     public static WeatherData GetCurrentWeather() {
         WeatherClient client = GetInstance();
-//        if (client.cachedCurrentWeather != null) {
-//            long timeBefore = client.cachedCurrentWeather.timeCalculated;
-//            if (System.currentTimeMillis() - (60 * 60 * 1000) > timeBefore) {
-//                client.CallRequest();
-//            }
-//        }
-//        else {
-//            client.CallRequest();
-//        }
-        client.CallRequest();
+        client.mCurrentConfig.setRequestMode(RequestMode.CURRENT);
+        /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
+            data until a time threshold
+        */
+        if (client.cachedCurrentWeather != null && !client.mCurrentConfig.isDirty) {
+            long timeBefore = client.cachedCurrentWeather.timeCalculated;
+            if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
+                client.CallRequest();
+            }
+        }
+        else {
+            client.CallRequest();
+        }
         return client.cachedCurrentWeather;
     }
 
-    public static void addOnWeatherDataReceivedListener(OnWeatherDataReceivedListener listener) {
-        GetInstance().onWeatherDataReceivedListeners.add(listener);
+    public static List<WeatherData> GetHourlyWeather() {
+        WeatherClient client = GetInstance();
+        client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
+        if (client.cachedHourlyWeather != null && !client.mCurrentConfig.isDirty) {
+            long timeBefore = client.cachedCurrentWeather.timeCalculated;
+            if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
+                client.CallRequest();
+            }
+        }
+        else {
+            client.CallRequest();
+        }
+        return client.cachedHourlyWeather;
     }
 
-    public interface OnWeatherDataReceivedListener {
+    public static void addOnCurrentWeatherDataReceivedListener(int id, OnCurrentWeatherDataReceivedListener listener) {
+        if (GetInstance().onCurrentWeatherDataReceivedListeners.get(id) == null)
+            GetInstance().onCurrentWeatherDataReceivedListeners.put(id, listener);
+    }
+
+    public static void addOnHourlyWeatherDataReceivedListener(int id, OnHourlyWeatherDataReceivedListener listener) {
+        if (GetInstance().onHourlyWeatherDataReceivedListeners.get(id) == null)
+            GetInstance().onHourlyWeatherDataReceivedListeners.put(id, listener);
+    }
+
+    public interface OnCurrentWeatherDataReceivedListener {
         void onDataLoaded(WeatherData data);
+        void onDataError(Throwable t);
+    }
+
+    public interface OnHourlyWeatherDataReceivedListener {
+        void onDataLoaded(List<WeatherData> data);
         void onDataError(Throwable t);
     }
 }

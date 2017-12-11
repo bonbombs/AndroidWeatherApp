@@ -18,8 +18,10 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.example.kelly.weatherapp.WeatherClient.API_KEY"
-            android:value="{$OPENWEATHER_API_KEY}" />
-
+            android:value="2be70096614a5f7120ab4f91929341ef" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDZzk_fouMnCGAT4FDz6xMJ-c_5JNmxzh0"/>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name">
@@ -39,7 +41,7 @@
         </receiver>
 
         <activity android:name=".PreferencesActivity" />
-        <activity android:name=".TimeListActivity"></activity>
+        <activity android:name=".TimeListActivity"/>
     </application>
 
 </manifest>
