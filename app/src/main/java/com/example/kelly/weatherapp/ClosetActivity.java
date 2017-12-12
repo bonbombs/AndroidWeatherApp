@@ -8,6 +8,8 @@ import android.widget.Button;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.UUID;
+
 /**
  * Created by hollyn on 12/11/17.
  */
@@ -29,6 +31,21 @@ public class ClosetActivity extends AppCompatActivity {
     private Button mSandalsButton;
     private Button mSneakersButton;
     private Button nextButton;
+
+    public Boolean isWinterCoat;
+    public Boolean isRainJacket;
+    public Boolean isScarf;
+    public Boolean isBeanie;
+    public Boolean isGloves;
+    public Boolean isUmbrella;
+    public Boolean isHat;
+    public Boolean isSunglasses;
+    public Boolean isTshirt;
+    public Boolean isShorts;
+    public Boolean isRainBoots;
+    public Boolean isSnowBoots;
+    public Boolean isSandals;
+    public Boolean isSneakers;
 
     private DatabaseReference mDatabase;
 
@@ -58,90 +75,101 @@ public class ClosetActivity extends AppCompatActivity {
 
         mWinterCoatButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isWinterCoat = true;
             }
         });
 
         mRainJacketButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isRainJacket = true;
             }
         });
 
         mScarfButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isScarf = true;
+
             }
         });
 
         mBeanieButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isBeanie = true;
             }
         });
 
         mGlovesButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isGloves = true;
             }
         });
 
         mUmbrellaButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isUmbrella = true;
             }
         });
 
         mHatButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isHat = true;
+
             }
         });
 
         mSunglassesButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isSunglasses = true;
             }
         });
 
         mTshirtButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isTshirt = true;
             }
         });
 
         mShortsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isShorts = true;
             }
         });
 
         mRainBootsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isRainBoots = true;
             }
         });
 
         mSnowBootsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isSnowBoots = true;
             }
         });
 
         mSandalsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isSandals = true;
+
             }
         });
 
         mSneakersButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Firebase code to add to user clothing and accessories preferences
+                isSneakers = true;
             }
         });
 
         nextButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                UserClothing userClothingPref = new UserClothing(isWinterCoat, isRainJacket, isScarf,
+                        isBeanie, isGloves, isUmbrella, isHat, isSunglasses, isTshirt, isShorts,
+                        isRainBoots, isSnowBoots, isSandals, isSneakers);
+
+                String userId = UUID.randomUUID().toString();
+
+                mDatabase.child("clothing").child(userId).setValue(userClothingPref);
+
                 // Intent to go to temperature preferences activity
                 Intent intent = new Intent(getApplicationContext(), TemperatureActivity.class);
                 startActivity(intent);
