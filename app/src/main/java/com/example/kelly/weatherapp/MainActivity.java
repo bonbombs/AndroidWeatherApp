@@ -254,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 // TODO: Fallback to (1) location -> (2) cached location -> (3) default location
                 mUseGPS = b;
+                sharedPref.edit().putBoolean(getString(R.string.preference_use_gps), b).apply();
                 if (mUseGPS) {
                     UpdateLocationAndWeather();
                 }

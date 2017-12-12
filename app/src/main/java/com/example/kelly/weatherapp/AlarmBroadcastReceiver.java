@@ -23,7 +23,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         Log.d("Intent_broadcast", i.getAction());
 
-        sharedPref = c.getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
+        /*sharedPref = c.getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
 
         beginningTime = sharedPref.getString("notifications_beginning_time", "12:00AM");
         endTime = sharedPref.getString("notifications_end_time", "12:00PM");
@@ -39,10 +39,10 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         Date now = Calendar.getInstance().getTime();
 
         // Only show notification if its between the times the user set
-        if (now.before(beginningDate) || now.after(endDate)) {
-            Log.d("Showing_notification", "notif");
+        if (now.before(beginningDate) || now.after(endDate)) {*/
+            Log.d("AHHHHHHHHH", "");
             Intent notif = new Intent(c, NotificationService.class);
             c.startService(notif);
-        }
+       // }
     }
 }

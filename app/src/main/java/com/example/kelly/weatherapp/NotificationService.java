@@ -21,7 +21,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 public class NotificationService extends Service {
 
     private final int PERMISSIONS_REQUEST_GETWEATHER = 0;
-    private final int NOTIFICATION_SERVICE_LISTENER_ID = 1;
+    private final int NOTIFICATION_SERVICE_LISTENER_ID = 5;
     private SharedPreferences sharedPref;
     private WeatherClient mClient;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -34,32 +34,43 @@ public class NotificationService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        Log.d("NotificationServiceMade", "");
+
         // TODO: Build notification based on user preferences
         sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
 
-        mUseGPS = sharedPref.getBoolean("preference_use_gps", false);
 
-        mClient = WeatherClient.GetInstance();
+
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        mUseGPS = sharedPref.getBoolean(getString(R.string.preference_use_gps), false);
+
         if (mUseGPS) {
+            mClient = WeatherClient.GetInstance();
+            // When we receive updated data on current weather from WeatherClient
+            mClient.addOnCurrentWeatherDataReceivedListener(NOTIFICATION_SERVICE_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
+                @Override
+                public void onDataLoaded(WeatherData data) {
+                    mCurrentWeatherData = data;
+                    if (data != null) {
+                        updateWeatherData();
+                    }
+                }
+                @Override
+                public void onDataError(Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+
             UpdateLocationAndWeather();
         }
-
-        // When we receive updated data on current weather from WeatherClient
-        mClient.addOnCurrentWeatherDataReceivedListener(NOTIFICATION_SERVICE_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
-            @Override
-            public void onDataLoaded(WeatherData data) {
-                mCurrentWeatherData = data;
-                if (data != null) {
-                    updateWeatherData();
-                }
-            }
-            @Override
-            public void onDataError(Throwable t) {
-                t.printStackTrace();
-            }
-        });
+        return START_STICKY;
     }
 
     @Override
@@ -106,6 +117,7 @@ public class NotificationService extends Service {
     }
 
     private void sendNotification() {
+        Log.d("NOTIFICATION", "");
         NotificationManager notif = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         // TODO: Get weather/clothing recommendation information instead
         android.app.Notification notify = new android.app.Notification.Builder(
@@ -115,5 +127,7 @@ public class NotificationService extends Service {
 
         notify.flags |= android.app.Notification.FLAG_AUTO_CANCEL;
         notif.notify(0, notify);
+
+        WeatherClient.removeListeners(NOTIFICATION_SERVICE_LISTENER_ID);
     }
 }
