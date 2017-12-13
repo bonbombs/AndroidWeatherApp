@@ -43,7 +43,7 @@ public class TemperatureActivity extends AppCompatActivity {
 
         hotSeekBar = (SeekBar)findViewById(R.id.seekBarHot); // make seekbar object
         hotProgress = (TextView)findViewById(R.id.hotBarProgress);
-        hotProgress.setText("" + 40);
+        hotProgress.setText("" + 40); // Set initial state of TextView
         isHot = 40; // Set to lowest temperature possible
         hotSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -59,18 +59,17 @@ public class TemperatureActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress,
                                           boolean fromUser) {
-                // TODO Auto-generated method stub
-                hotProgress = (TextView)findViewById(R.id.hotBarProgress);
-                Integer finalProgress = progress + 40;
-                isHot = finalProgress;
-                hotProgress.setText("" + finalProgress  + "°F");
+                Integer finalProgress = progress + 40; // Calculates temperature user chose with offset
+                hotProgress.setText("" + finalProgress  + "°F"); // Sets the TextView of the temp the user chose
                 seekBar.setMax(100);
+
+                isHot = finalProgress; // Sets the variable which will be pushed to firebase
             }
         });
 
         coldSeekBar = (SeekBar)findViewById(R.id.seekBarCold); // make seekbar object
         coldProgress = (TextView)findViewById(R.id.coldBarProgress);
-        coldProgress.setText("" + 10);
+        coldProgress.setText("" + 10); // Set initial state of TextView
         isCold = 10; // Set to lowest temperature possible
         coldSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
@@ -87,10 +86,11 @@ public class TemperatureActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress,
                                           boolean fromUser) {
-                // TODO Auto-generated method stub
-                Integer finalProgress = progress + 10;
-                coldProgress.setText("" + finalProgress + "°F");
+                Integer finalProgress = progress + 10; // Calculates temperature user chose with offset
+                coldProgress.setText("" + finalProgress + "°F"); // Sets the TextView of the temp the user chose
                 seekBar.setMax(100);
+
+                isCold = finalProgress; // Sets the variable which will be pushed to firebase
             }
         });
 
