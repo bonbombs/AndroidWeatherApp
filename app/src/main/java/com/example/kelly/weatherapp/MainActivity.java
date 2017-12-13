@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import static android.content.ContentValues.TAG;
@@ -366,10 +367,11 @@ public class MainActivity extends AppCompatActivity {
 
         RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
             @Override
-            public void onDataSuccess(Enumeration<String> data) {
+            public void onDataSuccess(Set<String> data) {
                 List<String> clothes = new ArrayList<>();
-
-                mClothes = clothes;
+                for (String dataItem : data) {
+                    clothes.add(dataItem);
+                }
             }
         });
 

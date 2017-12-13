@@ -26,6 +26,12 @@ import static android.content.ContentValues.TAG;
 
 /**
  * Created by Kelly on 12/4/2017.
+ *
+ * Controller class that grabs current and hourly weather data from Openweather API
+ *  Features include:
+ *      - Making HTTP requests using OkHttp library
+ *      - Parsing JSON into WeatherData objects on HTTP response
+ *      - Custom event listeners for other classes to use when new data is received
  */
 
 public class WeatherClient {
@@ -39,20 +45,25 @@ public class WeatherClient {
     public static final int CURRENT_FORECAST = 0;
     public static final int HOURLY_FORECAST = 1;
 
+    // Time before client can actually make a another HTTP request call (in seconds)
     public final long TIME_BEFORE_REPOLL = 1000L * 60;
 
     private static String API_KEY = "";
 
+    // Singleton instance
     private static WeatherClient mInstance;
-    private Request mRequest;
-    private String mCurrentCity;
-    private String mCurrentLocation;
-    private OkHttpClient mClient;
-    private WeatherConfig mCurrentConfig;;
 
-    private WeatherData cachedCurrentWeather;
-    private List<WeatherData> cachedHourlyWeather;
+    private Request mRequest;                   // Http Request object
+    private String mCurrentCity;                // City ID to fallback to (Boston)
+    private OkHttpClient mClient;               // OkHttp client object
+    private WeatherConfig mCurrentConfig;;      // Config to use when making requests
+
+    private WeatherData cachedCurrentWeather;       // Cached weather data
+    private List<WeatherData> cachedHourlyWeather;  // Cached weather data
+
+    // Map of all Listeners listening to our client for CurrentWeather updates
     private Dictionary<Integer, OnCurrentWeatherDataReceivedListener> onCurrentWeatherDataReceivedListeners;
+    // Map of all Listeners listening to our client for HourlyWeather updates
     private Dictionary<Integer, OnHourlyWeatherDataReceivedListener> onHourlyWeatherDataReceivedListeners;
 
     private WeatherClient() {
@@ -68,6 +79,10 @@ public class WeatherClient {
             API_KEY = "2be70096614a5f7120ab4f91929341ef";
     }
 
+    /**
+     * Updates Request object with new HTTP params
+     * @return HTTP Request object
+     */
     private Request UpdateRequest() {
         HttpUrl.Builder urlBuilder = null;
         switch (mCurrentConfig.getRequestMode()) {
@@ -94,10 +109,16 @@ public class WeatherClient {
         return new Request.Builder().url(url).build();
     }
 
+    /**
+     * Makes HTTP call using Request object
+     */
     private void CallRequest() {
+        // Updates the request first
         mRequest = UpdateRequest();
+        // Different callbacks since we need to parse things differently for each one
         switch (mCurrentConfig.getRequestMode()) {
             case HOURLY:
+                // Queues up the call
                 mClient.newCall(mRequest).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -189,10 +210,13 @@ public class WeatherClient {
                 hourlyWeather.add(currentWeather);
             }
             cachedHourlyWeather = hourlyWeather;
+            // Done updating. Config is no longer dirty
             mCurrentConfig.isDirty = false;
+            // Send success with corresponding data to listeners
             EmitHourlyWeatherDataUpdateSuccess(hourlyWeather);
         }
         catch (JSONException e) {
+            // Send error with error data to listeners
             EmitHourlyWeatherDataUpdateError(e);
         }
     }
@@ -252,13 +276,20 @@ public class WeatherClient {
             }
             currentWeather.timeCalculated = json.getLong("dt");
             cachedCurrentWeather = currentWeather;
+            // Done updating. Config is no longer dirty
             mCurrentConfig.isDirty = false;
+            // Send success with corresponding data to listeners
             EmitCurrentWeatherDataUpdateSuccess(currentWeather);
         } catch (JSONException e) {
+            // Send error with error data to listeners
             EmitCurrentWeatherDataUpdateError(e);
         }
     }
 
+    /**
+     * Send success with corresponding data to listeners
+     * @param newData Data to send
+     */
     private void EmitHourlyWeatherDataUpdateSuccess(List<WeatherData> newData) {
         Enumeration<OnHourlyWeatherDataReceivedListener> listeners = onHourlyWeatherDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
@@ -266,6 +297,10 @@ public class WeatherClient {
         }
     }
 
+    /**
+     * Send error with error data to listeners
+     * @param t Error to send
+     */
     private void EmitHourlyWeatherDataUpdateError(Throwable t) {
         Enumeration<OnHourlyWeatherDataReceivedListener> listeners = onHourlyWeatherDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
@@ -273,6 +308,10 @@ public class WeatherClient {
         }
     }
 
+    /**
+     * Send success with corresponding data to listeners
+     * @param newData Data to send
+     */
     private void EmitCurrentWeatherDataUpdateSuccess(WeatherData newData) {
         Enumeration<OnCurrentWeatherDataReceivedListener> listeners = onCurrentWeatherDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
@@ -280,6 +319,10 @@ public class WeatherClient {
         }
     }
 
+    /**
+     * Send error with error data to listeners
+     * @param t Error to send
+     */
     private void EmitCurrentWeatherDataUpdateError(Throwable t) {
         Enumeration<OnCurrentWeatherDataReceivedListener> listeners = onCurrentWeatherDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
@@ -292,6 +335,10 @@ public class WeatherClient {
         client.mCurrentConfig = newConfig;
     }
 
+    /**
+     * Singleton. Gets instance
+     * @return WeatherClient instance
+     */
     public static WeatherClient GetInstance() {
         if (mInstance == null)
             mInstance = new WeatherClient();
@@ -302,9 +349,12 @@ public class WeatherClient {
         return GetInstance().mCurrentConfig;
     }
 
+    /**
+     * Request an API call to get updated current weather data
+     * @return a cached version for the time being
+     */
     public static WeatherData GetCurrentWeather() {
         WeatherClient client = GetInstance();
-        client.mCurrentConfig.setRequestMode(RequestMode.CURRENT);
         /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
             data until a time threshold
         */
@@ -315,14 +365,22 @@ public class WeatherClient {
             }
         }
         else {
+            // Set request mode so we can generate the correct request URL
+            client.mCurrentConfig.setRequestMode(RequestMode.CURRENT);
             client.CallRequest();
         }
         return client.cachedCurrentWeather;
     }
 
+    /**
+     * Request an API call to get updated hourly weather data
+     * @return a cached version for the time being
+     */
     public static List<WeatherData> GetHourlyWeather() {
         WeatherClient client = GetInstance();
-        client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
+        /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
+            data until a time threshold
+        */
         if (client.cachedHourlyWeather != null && !client.mCurrentConfig.isDirty) {
             long timeBefore = client.cachedCurrentWeather.timeCalculated;
             if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
@@ -330,21 +388,37 @@ public class WeatherClient {
             }
         }
         else {
+            // Set request mode so we can generate the correct request URL
+            client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
             client.CallRequest();
         }
         return client.cachedHourlyWeather;
     }
 
+    /**
+     * Adds a current weather listener with ID
+     * @param id ID of the listener user
+     * @param listener listener object
+     */
     public static void addOnCurrentWeatherDataReceivedListener(int id, OnCurrentWeatherDataReceivedListener listener) {
         if (GetInstance().onCurrentWeatherDataReceivedListeners.get(id) == null)
             GetInstance().onCurrentWeatherDataReceivedListeners.put(id, listener);
     }
 
+    /**
+     * Adds an hourly weather listener with ID
+     * @param id ID of the listener user
+     * @param listener listener object
+     */
     public static void addOnHourlyWeatherDataReceivedListener(int id, OnHourlyWeatherDataReceivedListener listener) {
         if (GetInstance().onHourlyWeatherDataReceivedListeners.get(id) == null)
             GetInstance().onHourlyWeatherDataReceivedListeners.put(id, listener);
     }
 
+    /**
+     * Removes listeners of corresponding ID
+     * @param id ID of the listener user
+     */
     public static void removeListeners(int id) {
         if (GetInstance().onCurrentWeatherDataReceivedListeners.get(id) != null)
             GetInstance().onCurrentWeatherDataReceivedListeners.remove(id);
@@ -352,6 +426,9 @@ public class WeatherClient {
             GetInstance().onHourlyWeatherDataReceivedListeners.remove(id);
     }
 
+    /**
+     * Interfaces for client data listeners
+     */
     public interface OnCurrentWeatherDataReceivedListener {
         void onDataLoaded(WeatherData data);
         void onDataError(Throwable t);

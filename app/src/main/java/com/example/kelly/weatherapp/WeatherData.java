@@ -9,6 +9,8 @@ import java.util.List;
 
 /**
  * Created by Kelly on 12/4/2017.
+ *
+ * Class that hold Weather information
  */
 
 public class WeatherData implements Weather {
@@ -121,6 +123,8 @@ public class WeatherData implements Weather {
 
     @Override
     public float getTemperature(int i) {
+        // If the unit from API service is different from what we're requesting, make necessary
+        // conversions
         switch (i) {
             case CELSIUS:
                 if (mTempUnit == CELSIUS) return mTemp;
@@ -141,11 +145,13 @@ public class WeatherData implements Weather {
         return -1;
     }
 
+    // Not used correctly
     @Override
     public float getFeelsLikeTemperature(int i) {
         return getTemperature(i);
     }
 
+    // Not used
     @Override
     public float getDewPoint(int i) {
 
@@ -157,6 +163,7 @@ public class WeatherData implements Weather {
         return mHumidity;
     }
 
+    // Not used
     @Override
     public int[] getConditions() {
         return new int[0];

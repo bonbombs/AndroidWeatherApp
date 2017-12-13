@@ -7,6 +7,8 @@ import java.util.List;
 
 /**
  * Created by Kelly on 12/4/2017.
+ *
+ * Class containing information about a particular weather condition
  */
 
 public class Condition {

@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static android.content.ContentValues.TAG;
 
@@ -177,7 +178,7 @@ public class RecommendationService {
                         //TODO maybe: add more value to clothes by checking against temp
                     }
                     mClothingMap = sortByValue(mClothingMap);
-                    EmitOnWardrobeUpdateSuccess(mClothingMap);
+                    EmitOnWardrobeUpdateSuccess(mClothingMap.keySet());
                 }
 
                 @Override
@@ -272,7 +273,7 @@ public class RecommendationService {
         return mInstance;
     }
 
-    private void EmitOnWardrobeUpdateSuccess(Enumeration<String> newData) {
+    private void EmitOnWardrobeUpdateSuccess(Set<String> newData) {
         Enumeration<OnWardrobeUpdateDataReceivedListener> listeners = onWardrobeUpdateDataDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
             listeners.nextElement().onDataSuccess(newData);
@@ -285,7 +286,7 @@ public class RecommendationService {
     }
 
     public interface OnWardrobeUpdateDataReceivedListener {
-        void onDataSuccess(Enumeration<String> data);
+        void onDataSuccess(Set<String> data);
     }
 
     // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java

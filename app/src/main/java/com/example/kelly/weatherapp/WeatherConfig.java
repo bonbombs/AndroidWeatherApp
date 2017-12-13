@@ -4,7 +4,8 @@ import static com.google.android.gms.awareness.state.Weather.CELSIUS;
 import static com.google.android.gms.awareness.state.Weather.FAHRENHEIT;
 
 /**
- * Created by Chiff on 12/4/2017.
+ * Created by Kelly on 12/4/2017.
+ * 
  */
 
 public class WeatherConfig {
