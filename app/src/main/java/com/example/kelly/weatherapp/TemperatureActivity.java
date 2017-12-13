@@ -61,7 +61,7 @@ public class TemperatureActivity extends AppCompatActivity {
                                           boolean fromUser) {
                 Integer finalProgress = progress + 40; // Calculates temperature user chose with offset
                 hotProgress.setText("" + finalProgress  + "°F"); // Sets the TextView of the temp the user chose
-                seekBar.setMax(100);
+                seekBar.setMax(50);
 
                 isHot = finalProgress; // Sets the variable which will be pushed to firebase
             }
@@ -88,7 +88,7 @@ public class TemperatureActivity extends AppCompatActivity {
                                           boolean fromUser) {
                 Integer finalProgress = progress + 10; // Calculates temperature user chose with offset
                 coldProgress.setText("" + finalProgress + "°F"); // Sets the TextView of the temp the user chose
-                seekBar.setMax(100);
+                seekBar.setMax(50);
 
                 isCold = finalProgress; // Sets the variable which will be pushed to firebase
             }
