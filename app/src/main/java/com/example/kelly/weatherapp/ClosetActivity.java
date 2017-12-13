@@ -5,12 +5,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.support.v7.widget.SwitchCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.ToggleButton;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -24,20 +22,20 @@ import java.util.UUID;
 public class ClosetActivity extends AppCompatActivity implements
         CompoundButton.OnCheckedChangeListener {
 
-    private Switch mWinterCoatButton;
-    private Switch mRainJacketButton;
-    private Switch mScarfButton;
-    private Switch mBeanieButton;
-    private Switch mGlovesButton;
-    private Switch mUmbrellaButton;
-    private Switch mHatButton;
-    private Switch mSunglassesButton;
-    private Switch mTshirtButton;
-    private Switch mShortsButton;
-    private Switch mRainBootsButton;
-    private Switch mSnowBootsButton;
-    private Switch mSandalsButton;
-    private Switch mSneakersButton;
+    private SwitchCompat mWinterCoatButton;
+    private SwitchCompat mRainJacketButton;
+    private SwitchCompat mScarfButton;
+    private SwitchCompat mBeanieButton;
+    private SwitchCompat mGlovesButton;
+    private SwitchCompat mUmbrellaButton;
+    private SwitchCompat mHatButton;
+    private SwitchCompat mSunglassesButton;
+    private SwitchCompat mTshirtButton;
+    private SwitchCompat mShortsButton;
+    private SwitchCompat mRainBootsButton;
+    private SwitchCompat mSnowBootsButton;
+    private SwitchCompat mSandalsButton;
+    private SwitchCompat mSneakersButton;
 
     private Button doneButton;
 

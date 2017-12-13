@@ -3,7 +3,6 @@ package com.example.kelly.weatherapp;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.gms.awareness.state.Weather;
@@ -11,7 +10,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -27,8 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by Kelly on 12/10/2017.
@@ -50,6 +46,7 @@ public class RecommendationService {
     private List<WeatherData> mHourlyWeather;
     private List<String> mRecommendationEvaluator;
     private Map<String, Integer> mClothingMap;
+    private UserTemperature mTemperaturePreference;
 
     private List<String> DummyWardrobeRecommendations;
     private Dictionary<Integer, OnWardrobeUpdateDataReceivedListener> onWardrobeUpdateDataDataReceivedListeners;
@@ -128,6 +125,7 @@ public class RecommendationService {
         // TODO
         mHourlyWeather = WeatherClient.GetHourlyWeather();
         mCurrentWeather = WeatherClient.GetCurrentWeather();
+        helper_GetTemperaturePreferences(context);
         mContext = context;
     }
 
@@ -152,6 +150,32 @@ public class RecommendationService {
         }
 
         // (3) Else if weather temps in next N hours is past threshold, alert
+    }
+
+    private void helper_GetTemperaturePreferences(final Activity context) {
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("uuid", "");
+        if (!userId.isEmpty()) {
+            mDatabase.child("temperature").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Iterator<DataSnapshot> items = dataSnapshot.getChildren().iterator();
+                    mTemperaturePreference = new UserTemperature();
+                    while(items.hasNext()) {
+                        DataSnapshot item = items.next();
+                        Log.e("RecommendationService", "onDataChange: " + item.getKey() + " " + item.getValue());
+                        //if (item.getKey().equals("isHot")) {}
+                    }
+                    helper_GetWardrobeRecommendation(context);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
     }
 
     private void helper_GetWardrobeRecommendation(Activity context) {
