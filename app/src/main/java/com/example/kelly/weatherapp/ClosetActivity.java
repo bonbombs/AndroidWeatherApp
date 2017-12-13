@@ -5,8 +5,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.ToggleButton;
+
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -16,23 +21,25 @@ import java.util.UUID;
  * Created by hollyn on 12/11/17.
  */
 
-public class ClosetActivity extends AppCompatActivity {
+public class ClosetActivity extends AppCompatActivity implements
+        CompoundButton.OnCheckedChangeListener {
 
-    private Button mWinterCoatButton;
-    private Button mRainJacketButton;
-    private Button mScarfButton;
-    private Button mBeanieButton;
-    private Button mGlovesButton;
-    private Button mUmbrellaButton;
-    private Button mHatButton;
-    private Button mSunglassesButton;
-    private Button mTshirtButton;
-    private Button mShortsButton;
-    private Button mRainBootsButton;
-    private Button mSnowBootsButton;
-    private Button mSandalsButton;
-    private Button mSneakersButton;
-    private Button nextButton;
+    private Switch mWinterCoatButton;
+    private Switch mRainJacketButton;
+    private Switch mScarfButton;
+    private Switch mBeanieButton;
+    private Switch mGlovesButton;
+    private Switch mUmbrellaButton;
+    private Switch mHatButton;
+    private Switch mSunglassesButton;
+    private Switch mTshirtButton;
+    private Switch mShortsButton;
+    private Switch mRainBootsButton;
+    private Switch mSnowBootsButton;
+    private Switch mSandalsButton;
+    private Switch mSneakersButton;
+
+    private Button doneButton;
 
     public Boolean isWinterCoat;
     public Boolean isRainJacket;
@@ -75,96 +82,24 @@ public class ClosetActivity extends AppCompatActivity {
         mSnowBootsButton = findViewById(R.id.button_snowboots);
         mSandalsButton = findViewById(R.id.button_sandals);
         mSneakersButton = findViewById(R.id.button_sneakers);
-        nextButton = findViewById(R.id.button_next);
+        doneButton = findViewById(R.id.button_done);
 
-        mWinterCoatButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isWinterCoat = true;
-            }
-        });
+        mWinterCoatButton.setOnCheckedChangeListener(this);
+        mRainJacketButton.setOnCheckedChangeListener(this);
+        mScarfButton.setOnCheckedChangeListener(this);
+        mBeanieButton.setOnCheckedChangeListener(this);
+        mGlovesButton.setOnCheckedChangeListener(this);
+        mUmbrellaButton.setOnCheckedChangeListener(this);
+        mHatButton.setOnCheckedChangeListener(this);
+        mSunglassesButton.setOnCheckedChangeListener(this);
+        mTshirtButton.setOnCheckedChangeListener(this);
+        mShortsButton.setOnCheckedChangeListener(this);
+        mRainBootsButton.setOnCheckedChangeListener(this);
+        mSnowBootsButton.setOnCheckedChangeListener(this);
+        mSandalsButton.setOnCheckedChangeListener(this);
+        mSneakersButton.setOnCheckedChangeListener(this);
 
-        mRainJacketButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isRainJacket = true;
-            }
-        });
-
-        mScarfButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isScarf = true;
-
-            }
-        });
-
-        mBeanieButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isBeanie = true;
-            }
-        });
-
-        mGlovesButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isGloves = true;
-            }
-        });
-
-        mUmbrellaButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isUmbrella = true;
-            }
-        });
-
-        mHatButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isHat = true;
-
-            }
-        });
-
-        mSunglassesButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isSunglasses = true;
-            }
-        });
-
-        mTshirtButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isTshirt = true;
-            }
-        });
-
-        mShortsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isShorts = true;
-            }
-        });
-
-        mRainBootsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isRainBoots = true;
-            }
-        });
-
-        mSnowBootsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isSnowBoots = true;
-            }
-        });
-
-        mSandalsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isSandals = true;
-
-            }
-        });
-
-        mSneakersButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                isSneakers = true;
-            }
-        });
-
-        nextButton.setOnClickListener(new View.OnClickListener() {
+        doneButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 UserClothing userClothingPref = new UserClothing(isWinterCoat, isRainJacket, isScarf,
                         isBeanie, isGloves, isUmbrella, isHat, isSunglasses, isTshirt, isShorts,
@@ -185,6 +120,68 @@ public class ClosetActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        switch (buttonView.getId()) {
+            case R.id.button_wintercoat:
+                if (isChecked) { isWinterCoat = true; }
+                else { isWinterCoat = false; }
+                break;
+            case R.id.button_rainjacket:
+                if (isChecked) { isRainJacket = true; }
+                else { isRainJacket = false; }
+                break;
+            case R.id.button_scarf:
+                if (isChecked) { isScarf = true; }
+                else { isScarf = false; }
+                break;
+            case R.id.button_beanie:
+                if (isChecked) { isBeanie = true; }
+                else { isBeanie = false; }
+                break;
+            case R.id.button_gloves:
+                if (isChecked) { isGloves = true; }
+                else { isGloves = false; }
+                break;
+            case R.id.button_umbrella:
+                if (isChecked) { isUmbrella = true; }
+                else { isUmbrella = false; }
+                break;
+            case R.id.button_hat:
+                if (isChecked) { isHat = true; }
+                else { isHat = false; }
+                break;
+            case R.id.button_sunglasses:
+                if (isChecked) { isSunglasses = true; }
+                else { isSunglasses = false; }
+                break;
+            case R.id.button_tshirt:
+                if (isChecked) { isTshirt = true; }
+                else { isTshirt = false; }
+                break;
+            case R.id.button_shorts:
+                if (isChecked) { isShorts = true; }
+                else { isShorts = false; }
+                break;
+            case R.id.button_rainboots:
+                if (isChecked) { isRainBoots = true; }
+                else { isRainBoots = false; }
+                break;
+            case R.id.button_snowboots:
+                if (isChecked) { isSnowBoots = true; }
+                else { isSnowBoots = false; }
+                break;
+            case R.id.button_sandals:
+                if (isChecked) { isSandals = true; }
+                else { isSandals = false; }
+                break;
+            case R.id.button_sneakers:
+                if (isChecked) { isSneakers = true; }
+                else { isSneakers = false; }
+                break;
+        }
+
+    }
 
 
 }

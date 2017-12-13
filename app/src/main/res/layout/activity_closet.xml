@@ -21,192 +21,132 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout1"
-        android:layout_marginTop="60dp"
-        android:layout_alignStart="@+id/linearLayout2">
+        android:orientation="vertical"
+        android:layout_marginTop="40dp"
+        android:layout_marginStart="10dp"
+        android:id="@+id/linearLayoutWhole">
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_wintercoat"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Winter Coat"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Winter Coat  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_rainjacket"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Rain Jacket"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Rain Jacket  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout2"
-        android:layout_below="@+id/linearLayout1"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_scarf"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Scarf"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Scarf  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_beanie"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Beanie"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Beanie  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout3"
-        android:layout_below="@+id/linearLayout2"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_gloves"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Gloves"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Gloves  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_umbrella"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Umbrella"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Umbrella  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout4"
-        android:layout_below="@+id/linearLayout3"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_hat"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Hat"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Hat  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_sunglasses"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Sunglasses"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Sunglasses  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout5"
-        android:layout_below="@+id/linearLayout4"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_tshirt"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="T-Shirt"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="T-shirt  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_shorts"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Shorts"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Shorts  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout6"
-        android:layout_below="@+id/linearLayout5"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_rainboots"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Rain Boots"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Rain Boots  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_snowboots"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Snow Boots"
-            android:textColor="#fff" />
-    </LinearLayout>
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Snow Boots  " />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout7"
-        android:layout_below="@+id/linearLayout6"
-        android:layout_centerHorizontal="true">
-
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_sandals"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="30dp"
-            android:text="Sandals"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginBottom="5dp"
+            android:text="Sandals  " />
 
-        <Button
+        <android.support.v7.widget.SwitchCompat
             android:id="@+id/button_sneakers"
-            android:layout_width="120dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="30dp"
-            android:text="Sneakers"
-            android:textColor="#fff" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Sneakers  " />
+
     </LinearLayout>
 
     <Button
-        android:id="@+id/button_next"
+        android:id="@+id/button_done"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:text="Next"
+        android:text="Done"
         android:textColor="#fff"
         tools:layout_editor_absoluteY="0dp"
         tools:layout_editor_absoluteX="0dp" />

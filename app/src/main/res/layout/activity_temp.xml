@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/relativeLayoutItems"
     tools:context="com.example.kelly.weatherapp.TemperatureActivity">
 
     <LinearLayout
         android:layout_width="368dp"
         android:layout_height="495dp"
         android:orientation="vertical"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         tools:layout_editor_absoluteY="8dp"
         tools:layout_editor_absoluteX="8dp">
 
@@ -25,14 +27,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="70dp"
+            android:layout_marginTop="15dp"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="What do you consider hot?"/>
+                android:gravity="center"
+                android:textSize="20sp"
+                android:text="What do you consider to be a hot temperature?"/>
+            <TextView
+                android:id="@+id/hotBarProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="30sp"/>
             <SeekBar
                 android:id="@+id/seekBarHot"
                 android:layout_width="300dp"
@@ -41,7 +50,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginTop="26dp"
-                android:max="10"/>
+                android:max="50"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -52,13 +61,13 @@
                     android:layout_height="wrap_content"
                     android:gravity="left"
                     android:layout_weight="1"
-                    android:text="40 degrees"/>
+                    android:text="40°F"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="right"
                     android:layout_weight="1"
-                    android:text="90 degrees"/>
+                    android:text="90°F"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -67,14 +76,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="150dp"
+            android:layout_marginTop="70dp"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="What do you consider cold?"/>
+                android:gravity="center"
+                android:textSize="20sp"
+                android:text="What do you consider to be a cold temperature (fahrenheit)?"/>
+            <TextView
+                android:id="@+id/coldBarProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="30sp"/>
             <SeekBar
                 android:id="@+id/seekBarCold"
                 android:layout_width="300dp"
@@ -83,7 +99,8 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginTop="26dp"
-                android:max="10"/>
+                android:min="10"
+                android:max="60"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -94,20 +111,27 @@
                     android:layout_height="wrap_content"
                     android:gravity="left"
                     android:layout_weight="1"
-                    android:text="10 degrees"/>
+                    android:text="10°F"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="right"
                     android:layout_weight="1"
-                    android:text="60 degrees"/>
+                    android:text="60°F"/>
             </LinearLayout>
-
         </LinearLayout>
-
-
     </LinearLayout>
 
+    <Button
+        android:id="@+id/button_done"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="bottom"
+        android:text="Done"
+        android:textColor="#fff"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" />
 
-
-</android.support.constraint.ConstraintLayout>
+</RelativeLayout>
