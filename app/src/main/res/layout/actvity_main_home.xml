@@ -216,10 +216,6 @@
         android:scrollbars="horizontal|vertical"
         tools:listitem="@layout/clothing_recommendation_item_view" >
 
-        <TimePicker
-            android:id="@+id/timePicker"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
     </android.support.v7.widget.RecyclerView>
 
 </LinearLayout>

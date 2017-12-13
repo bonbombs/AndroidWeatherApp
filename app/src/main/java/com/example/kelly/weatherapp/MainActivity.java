@@ -44,7 +44,9 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private WeatherData mCurrentWeatherData;
     private List<WeatherData> mHourlyWeatherData;
     private Place mCachedPlace;
+    private List<String> mClothes;
 
     enum MainViewType {
         HOME,
@@ -277,6 +280,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        LinearLayout tempSetting = findViewById(R.id.settings_temp_pref);
+        tempSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getBaseContext(), TemperatureActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        LinearLayout wardrobeSetting = findViewById(R.id.settings_wardrobe_pref);
+        wardrobeSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getBaseContext(), ClosetActivity.class);
+                startActivity(intent);
+            }
+        });
+
         UpdateSettingsUI();
     }
 
@@ -343,7 +364,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
+            @Override
+            public void onDataSuccess(Enumeration<String> data) {
+                List<String> clothes = new ArrayList<>();
+
+                mClothes = clothes;
+            }
+        });
+
         UpdateLocationAndWeather();
+        RecommendationService.GetInstance().DetermineRecommendations(this);
     }
 
     private void UpdateHomeUI() {
@@ -370,14 +401,13 @@ public class MainActivity extends AppCompatActivity {
             mHourlyWeatherAdapter.notifyDataSetChanged();
         }
 
-        List<String> clothes = RecommendationService.GetRecommendedWardrobe();
-        if (clothes != null) {
+        if (mClothes != null) {
             RecyclerView clothingRecommendationView = findViewById(R.id.clothingRecommendationView);
             if (mClothingRecommendationAdapter == null)
-                mClothingRecommendationAdapter = new ClothingRecommendationsAdapter(clothes);
+                mClothingRecommendationAdapter = new ClothingRecommendationsAdapter(mClothes);
             if (clothingRecommendationView.getAdapter() == null)
                 clothingRecommendationView.setAdapter(mClothingRecommendationAdapter);
-            mClothingRecommendationAdapter.mRecommendedClothes = clothes;
+            mClothingRecommendationAdapter.mRecommendedClothes = mClothes;
             mClothingRecommendationAdapter.notifyDataSetChanged();
         }
 
