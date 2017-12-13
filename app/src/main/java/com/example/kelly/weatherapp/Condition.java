@@ -3,6 +3,7 @@ package com.example.kelly.weatherapp;
 import com.google.android.gms.awareness.state.Weather;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by Kelly on 12/4/2017.

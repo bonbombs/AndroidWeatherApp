@@ -1,6 +1,8 @@
 package com.example.kelly.weatherapp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -48,6 +50,7 @@ public class ClosetActivity extends AppCompatActivity {
     public Boolean isSneakers;
 
     private DatabaseReference mDatabase;
+    private SharedPreferences mSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,7 @@ public class ClosetActivity extends AppCompatActivity {
 
         // Get Firebase database reference using google-services.json file
         mDatabase = FirebaseDatabase.getInstance().getReference();
+        mSharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
 
         mWinterCoatButton = findViewById(R.id.button_wintercoat);
         mRainJacketButton = findViewById(R.id.button_rainjacket);
@@ -166,7 +170,11 @@ public class ClosetActivity extends AppCompatActivity {
                         isBeanie, isGloves, isUmbrella, isHat, isSunglasses, isTshirt, isShorts,
                         isRainBoots, isSnowBoots, isSandals, isSneakers);
 
-                String userId = UUID.randomUUID().toString();
+                String userId = mSharedPreferences.getString("uuid", "");
+                if (userId.isEmpty()) {
+                   userId = UUID.randomUUID().toString();
+                   mSharedPreferences.edit().putString("uuid", userId).apply();
+                }
 
                 mDatabase.child("clothing").child(userId).setValue(userClothingPref);
 
