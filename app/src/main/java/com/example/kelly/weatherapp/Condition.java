@@ -16,13 +16,16 @@ public class Condition {
     public int State;
     public String ConditionName;
     public String ConditionDesc;
+    public int mIconId = 0;
 
     public Condition(JSONObject json) throws IOException {
         int code = 0;
+        String iconPath = "";
         try {
             ConditionName = json.getString("main");
             ConditionDesc = json.getString("description");
             code = json.getInt("id");
+            iconPath = json.getString("icon");
         }
         catch (Throwable t) {
             t.printStackTrace();
@@ -44,6 +47,31 @@ public class Condition {
             State = Weather.CONDITION_CLOUDY;
         } else {
             State = Weather.CONDITION_UNKNOWN;
+        }
+
+        if (iconPath.contains("01")) {
+            mIconId = R.drawable.icons8_sun_50;
+        }
+        else if (iconPath.contains("02")) {
+            mIconId = R.drawable.icons8_partly_cloudy_day_50;
+        }
+        else if (iconPath.contains("03") || iconPath.contains("04")) {
+            mIconId = R.drawable.icons8_cloud_40;
+        }
+        else if (iconPath.contains("09")) {
+            mIconId = R.drawable.icons8_rain_50;
+        }
+        else if (iconPath.contains("10")) {
+            mIconId = R.drawable.icons8_rain_cloud_40;
+        }
+        else if (iconPath.contains("11")) {
+            mIconId = R.drawable.icons8_storm_50;
+        }
+        else if (iconPath.contains("13")) {
+            mIconId = R.drawable.icons8_snow_50;
+        }
+        else if (iconPath.contains("50")) {
+            mIconId = R.drawable.icons8_haze_40;
         }
     }
 }

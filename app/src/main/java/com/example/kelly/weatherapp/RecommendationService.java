@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Dictionary;
@@ -125,8 +126,9 @@ public class RecommendationService {
         // TODO
         mHourlyWeather = WeatherClient.GetHourlyWeather();
         mCurrentWeather = WeatherClient.GetCurrentWeather();
-        helper_GetTemperaturePreferences(context);
+
         mContext = context;
+        helper_GetTemperaturePreferences();
     }
 
     private void UpdateRecommendations() {
@@ -138,7 +140,6 @@ public class RecommendationService {
         // TODO Wardrobe Rec Section
         // Always recommend a list, unless they never checked off anything
         if (mCurrentWeather != null && mHourlyWeather != null) {
-            helper_GetWardrobeRecommendation(mContext);
             float currentSeverity = CalculateWeatherSeverity(mCurrentWeather);
             for (int i = 0; i < MAX_3HOURS_LOOK_AHEAD; i++) {
                 WeatherData data = mHourlyWeather.get(i);
@@ -152,9 +153,9 @@ public class RecommendationService {
         // (3) Else if weather temps in next N hours is past threshold, alert
     }
 
-    private void helper_GetTemperaturePreferences(final Activity context) {
+    private void helper_GetTemperaturePreferences() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = mContext.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         String userId = prefs.getString("uuid", "");
         if (!userId.isEmpty()) {
             mDatabase.child("temperature").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -165,9 +166,14 @@ public class RecommendationService {
                     while(items.hasNext()) {
                         DataSnapshot item = items.next();
                         Log.e("RecommendationService", "onDataChange: " + item.getKey() + " " + item.getValue());
-                        //if (item.getKey().equals("isHot")) {}
+                        if (item.getKey().equals("isHot")) {
+                            mTemperaturePreference.isHot = item.getValue(Integer.class);
+                        }
+                        if (item.getKey().equals("isCold")) {
+                            mTemperaturePreference.isCold = item.getValue(Integer.class);
+                        }
                     }
-                    helper_GetWardrobeRecommendation(context);
+                    helper_GetWardrobeRecommendation();
                 }
 
                 @Override
@@ -178,31 +184,35 @@ public class RecommendationService {
         }
     }
 
-    private void helper_GetWardrobeRecommendation(Activity context) {
+    private void helper_GetWardrobeRecommendation() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = mContext.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
         String userId = prefs.getString("uuid", "");
         if (!userId.isEmpty()) {
             mDatabase.child("clothing").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     mClothingMap = new HashMap<>();
-                    Log.e("RecommendationService", "onDataChange: " + dataSnapshot.getKey());
                     Iterator<DataSnapshot> items = dataSnapshot.getChildren().iterator();
                     while(items.hasNext()) {
                         DataSnapshot item = items.next();
-                        Log.e("RecommendationService", "onDataChange: " + item.getKey() + " " + item.getValue());
-                        mClothingMap.put(item.getKey(), 0);
-                        List<Integer> conditions = GetConditonsFromClothing(item.getKey());
-                        for (Condition c : mCurrentWeather.getConditionsData()) {
-                            if (conditions.contains(c.State)) {
+                        if (item.getValue(Boolean.class)) {
+                            //Log.e("RecommendationService", "onDataChange: " + item.getKey() + " " + item.getValue());
+                            mClothingMap.put(item.getKey(), 0);
+                            List<Integer> conditions = GetConditionsFromClothing(item.getKey());
+                            for (Condition c : mCurrentWeather.getConditionsData()) {
+                                if (conditions.contains(c.State)) {
+                                    mClothingMap.put(item.getKey(), mClothingMap.get(item.getKey()) + 1);
+                                }
+                            }
+                            List<String> clothes = GetClothingFromTemperature(mTemperaturePreference);
+                            if (clothes.contains(item.getKey())) {
                                 mClothingMap.put(item.getKey(), mClothingMap.get(item.getKey()) + 1);
                             }
                         }
-                        //TODO maybe: add more value to clothes by checking against temp
                     }
                     mClothingMap = sortByValue(mClothingMap);
-                    EmitOnWardrobeUpdateSuccess(mClothingMap.keySet());
+                    EmitOnWardrobeUpdateSuccess(mClothingMap.keySet(), mClothingMap);
                 }
 
                 @Override
@@ -211,7 +221,33 @@ public class RecommendationService {
         }
     }
 
-    public List<Integer> GetConditonsFromClothing (String clothing) {
+    public List<String> GetClothingFromTemperature (UserTemperature tempPrefs) {
+        List<String> result = new ArrayList<>();
+
+        if (mCurrentWeather.getTemperature(Weather.FAHRENHEIT) > tempPrefs.isHot
+                || mCurrentWeather.getTemperature(Weather.FAHRENHEIT) > 80) {
+            result = Arrays.asList(new String[] {
+                    "isHat",
+                    "isSunglasses",
+                    "isTshirt",
+                    "isShorts",
+                    "isSandals"
+            });
+        }
+        else if (mCurrentWeather.getTemperature(Weather.FAHRENHEIT) < tempPrefs.isCold
+                || mCurrentWeather.getTemperature(Weather.FAHRENHEIT) < 32) {
+            result = Arrays.asList(new String[] {
+                    "isWinterCoat",
+                    "isScarf",
+                    "isBeanie",
+                    "isGloves"
+            });
+        }
+
+        return result;
+    }
+
+    public List<Integer> GetConditionsFromClothing (String clothing) {
         List<Integer> result = new ArrayList<>();
         if (clothing.equals("isGloves")) {
             result.add(Weather.CONDITION_ICY);
@@ -241,16 +277,6 @@ public class RecommendationService {
             result.add(Weather.CONDITION_RAINY);
             result.add(Weather.CONDITION_STORMY);
         }
-        else if (clothing.equals("isHat")) {
-            result.add(Weather.CONDITION_CLEAR);
-        }
-        else if (clothing.equals("isSunglasses")) {
-            result.add(Weather.CONDITION_CLEAR);
-        }
-        else if (clothing.equals("isTshirt")) {
-            result.add(Weather.CONDITION_CLEAR);
-            result.add(Weather.CONDITION_CLOUDY);
-        }
         else if (clothing.equals("isRainBoots")) {
             result.add(Weather.CONDITION_RAINY);
             result.add(Weather.CONDITION_STORMY);
@@ -259,14 +285,6 @@ public class RecommendationService {
             result.add(Weather.CONDITION_ICY);
             result.add(Weather.CONDITION_SNOWY);
         }
-        else if (clothing.equals("isSandals")) {
-            result.add(Weather.CONDITION_CLEAR);
-        }
-        else if (clothing.equals("isSneakers")) {
-            result.add(Weather.CONDITION_CLEAR);
-            result.add(Weather.CONDITION_CLOUDY);
-        }
-
         return result;
     }
 
@@ -297,10 +315,10 @@ public class RecommendationService {
         return mInstance;
     }
 
-    private void EmitOnWardrobeUpdateSuccess(Set<String> newData) {
+    private void EmitOnWardrobeUpdateSuccess(Set<String> newData, Map<String, Integer> map) {
         Enumeration<OnWardrobeUpdateDataReceivedListener> listeners = onWardrobeUpdateDataDataReceivedListeners.elements();
         while(listeners.hasMoreElements()) {
-            listeners.nextElement().onDataSuccess(newData);
+            listeners.nextElement().onDataSuccess(newData, map);
         }
     }
 
@@ -310,7 +328,7 @@ public class RecommendationService {
     }
 
     public interface OnWardrobeUpdateDataReceivedListener {
-        void onDataSuccess(Set<String> data);
+        void onDataSuccess(Set<String> data, Map<String, Integer> map);
     }
 
     // https://stackoverflow.com/questions/109383/sort-a-mapkey-value-by-values-java

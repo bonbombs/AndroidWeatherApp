@@ -10,9 +10,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 
 /**
@@ -39,20 +44,20 @@ public class ClosetActivity extends AppCompatActivity implements
 
     private Button doneButton;
 
-    public Boolean isWinterCoat;
-    public Boolean isRainJacket;
-    public Boolean isScarf;
-    public Boolean isBeanie;
-    public Boolean isGloves;
-    public Boolean isUmbrella;
-    public Boolean isHat;
-    public Boolean isSunglasses;
-    public Boolean isTshirt;
-    public Boolean isShorts;
-    public Boolean isRainBoots;
-    public Boolean isSnowBoots;
-    public Boolean isSandals;
-    public Boolean isSneakers;
+    public Boolean isWinterCoat = false;
+    public Boolean isRainJacket = false;
+    public Boolean isScarf = false;
+    public Boolean isBeanie = false;
+    public Boolean isGloves = false;
+    public Boolean isUmbrella = false;
+    public Boolean isHat = false;
+    public Boolean isSunglasses = false;
+    public Boolean isTshirt = false;
+    public Boolean isShorts = false;
+    public Boolean isRainBoots = false;
+    public Boolean isSnowBoots = false;
+    public Boolean isSandals = false;
+    public Boolean isSneakers = false;
 
     private DatabaseReference mDatabase;
     private SharedPreferences mSharedPreferences;
@@ -81,6 +86,43 @@ public class ClosetActivity extends AppCompatActivity implements
         mSandalsButton = findViewById(R.id.button_sandals);
         mSneakersButton = findViewById(R.id.button_sneakers);
         doneButton = findViewById(R.id.button_done);
+
+        String userId = mSharedPreferences.getString("uuid", "");
+        if (userId.isEmpty()) {
+            userId = UUID.randomUUID().toString();
+            mSharedPreferences.edit().putString("uuid", userId).apply();
+        }
+        else {
+            mDatabase.child("clothing").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Iterator<DataSnapshot> items = dataSnapshot.getChildren().iterator();
+                    UserClothing data = dataSnapshot.getValue(UserClothing.class);
+                    if (data == null) return;
+                    if (data.isWinterCoat == null) data.isWinterCoat = false;
+                    else if (data.isRainJacket == null) data.isRainJacket = false;
+                    else if (data.isScarf == null) data.isScarf = false;
+                    else if (data.isBeanie == null) data.isBeanie = false;
+                    else if (data.isGloves == null) data.isGloves = false;
+                    else if (data.isUmbrella == null) data.isUmbrella = false;
+                    else if (data.isHat == null) data.isHat = false;
+                    else if (data.isSunglasses == null) data.isSunglasses = false;
+                    else if (data.isTshirt == null) data.isTshirt = false;
+                    else if (data.isShorts) data.isShorts = false;
+                    else if (data.isRainBoots) data.isRainBoots = false;
+                    else if (data.isSnowBoots) data.isSnowBoots = false;
+                    else if (data.isSandals) data.isSandals = false;
+                    else if (data.isSneakers) data.isSneakers = false;
+
+                    setChecked(data);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
 
         mWinterCoatButton.setOnCheckedChangeListener(this);
         mRainJacketButton.setOnCheckedChangeListener(this);
@@ -111,11 +153,26 @@ public class ClosetActivity extends AppCompatActivity implements
 
                 mDatabase.child("clothing").child(userId).setValue(userClothingPref);
 
-                // Intent to go to temperature preferences activity
-                Intent intent = new Intent(getApplicationContext(), TemperatureActivity.class);
-                startActivity(intent);
+                finish();
             }
         });
+    }
+
+    private void setChecked(UserClothing data) {
+        mWinterCoatButton.setChecked(data.isWinterCoat);
+        mRainJacketButton.setChecked(data.isRainJacket);
+        mScarfButton.setChecked(data.isScarf);
+        mBeanieButton.setChecked(data.isBeanie);
+        mGlovesButton.setChecked(data.isGloves);
+        mUmbrellaButton.setChecked(data.isUmbrella);
+        mHatButton.setChecked(data.isHat);
+        mSunglassesButton.setChecked(data.isSunglasses);
+        mTshirtButton.setChecked(data.isTshirt);
+        mShortsButton.setChecked(data.isShorts);
+        mRainBootsButton.setChecked(data.isRainBoots);
+        mSnowBootsButton.setChecked(data.isSnowBoots);
+        mSandalsButton.setChecked(data.isSandals);
+        mSneakersButton.setChecked(data.isSneakers);
     }
 
     @Override

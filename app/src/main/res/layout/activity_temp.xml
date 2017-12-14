@@ -36,12 +36,14 @@
                 android:gravity="center"
                 android:textSize="20sp"
                 android:text="What do you consider to be a hot temperature?"/>
+
             <TextView
                 android:id="@+id/hotBarProgress"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="30sp"/>
+                android:textAlignment="center"
+                android:textSize="30sp" />
             <SeekBar
                 android:id="@+id/seekBarHot"
                 android:layout_width="300dp"
@@ -85,12 +87,14 @@
                 android:gravity="center"
                 android:textSize="20sp"
                 android:text="What do you consider to be a cold temperature (fahrenheit)?"/>
+
             <TextView
                 android:id="@+id/coldBarProgress"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="30sp"/>
+                android:textAlignment="center"
+                android:textSize="30sp" />
             <SeekBar
                 android:id="@+id/seekBarCold"
                 android:layout_width="300dp"

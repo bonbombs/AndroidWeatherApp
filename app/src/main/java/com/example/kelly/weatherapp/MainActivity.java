@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -47,7 +48,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -71,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mConditionView;
     private TextView mHumidityView;
     private TextView mWindView;
+    private ImageView mWeatherIconView;
     private HourlyWeatherAdapter mHourlyWeatherAdapter;
     private ClothingRecommendationsAdapter mClothingRecommendationAdapter;
     private SwipeRefreshLayout mSwipeContainer;
@@ -185,9 +189,18 @@ public class MainActivity extends AppCompatActivity {
                             WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
                             UpdateWeather();
                         }
+                        else {
+                            UpdateLocationAndWeather();
+                        }
                         places.release();
                     } else {
                         Log.e(TAG, "Place not found.");
+                        if (!mUseGPS) {
+                            UpdateWeather();
+                        }
+                        else {
+                            UpdateLocationAndWeather();
+                        }
                     }
                 }
             });
@@ -243,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 // TODO: Fallback to (1) location -> (2) cached location -> (3) default location
                 mUseGPS = b;
+                sharedPref.edit().putBoolean(getString(R.string.preference_use_gps), b).apply();
                 if (mUseGPS) {
                     UpdateLocationAndWeather();
                 }
@@ -309,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
         mConditionView = findViewById(R.id.currentCondition);
         mHumidityView = findViewById(R.id.humidityView);
         mWindView = findViewById(R.id.windView);
+        mWeatherIconView = findViewById(R.id.weather_icon);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         LinearLayoutManager layoutManagerWeather
@@ -367,21 +382,44 @@ public class MainActivity extends AppCompatActivity {
 
         RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
             @Override
-            public void onDataSuccess(Set<String> data) {
+            public void onDataSuccess(Set<String> data, Map<String, Integer> map) {
                 List<String> clothes = new ArrayList<>();
                 for (String dataItem : data) {
-                    clothes.add(dataItem);
+                    if (map.get(dataItem) > 0) {
+                        String displayName = dataItem.substring(2);
+                        if (dataItem.equals("isTshirt"))
+                            displayName = "T-Shirt";
+                        if (dataItem.equals("isRainJacket"))
+                            displayName = "Rain Jacket";
+                        if (dataItem.equals("isWinterCoat"))
+                            displayName = "Winter Coat";
+                        if (dataItem.equals("isRainBoots"))
+                            displayName = "Rain Boots";
+                        if (dataItem.equals("isSnowBoots"))
+                            displayName = "Snow Boots";
+                        clothes.add(displayName);
+                    }
                 }
+                mClothes = clothes;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        UpdateHomeUI();
+                    }
+                });
             }
         });
 
-        UpdateLocationAndWeather();
+        if (mUseGPS)
+            UpdateLocationAndWeather();
+        else
+            UpdateWeather();
         RecommendationService.GetInstance().DetermineRecommendations(this);
     }
 
     private void UpdateHomeUI() {
         // Skip if we aren't on the home screen
-        if (mCurrentView != MainViewType.HOME) return;
+        //if (mCurrentView != MainViewType.HOME) return;
         if (mCurrentWeatherData != null) {
             mTempNowView.setText(String.format("%.0f", mCurrentWeatherData.getTemperature(mPreferredUnit)));
             mTempLocationView.setText(mCurrentWeatherData.getCityName());
@@ -391,13 +429,14 @@ public class MainActivity extends AppCompatActivity {
             mWindView.setText(String.format("%.2f %s %.2f deg", mCurrentWeatherData.getWindSpeed(), windSpeedUnit, mCurrentWeatherData.getWindDeg()));
             mHumidityView.setText(String.format("%d%%", mCurrentWeatherData.getHumidity()));
             mConditionView.setText(mCurrentWeatherData.getConditionsData().get(0).ConditionDesc);
+            mWeatherIconView.setImageResource(mCurrentWeatherData.getConditionsData().get(0).mIconId);
         }
         if (mHourlyWeatherData != null) {
             RecyclerView hourlyWeatherView = findViewById(R.id.hourlyWeatherView);
             if (mHourlyWeatherAdapter == null) {
                 mHourlyWeatherAdapter = new HourlyWeatherAdapter(mHourlyWeatherData);
             }
-            if (hourlyWeatherView.getAdapter() == null)
+            if (hourlyWeatherView != null && hourlyWeatherView.getAdapter() == null)
                 hourlyWeatherView.setAdapter(mHourlyWeatherAdapter);
             mHourlyWeatherAdapter.mWeatherList = mHourlyWeatherData;
             mHourlyWeatherAdapter.notifyDataSetChanged();
@@ -407,17 +446,19 @@ public class MainActivity extends AppCompatActivity {
             RecyclerView clothingRecommendationView = findViewById(R.id.clothingRecommendationView);
             if (mClothingRecommendationAdapter == null)
                 mClothingRecommendationAdapter = new ClothingRecommendationsAdapter(mClothes);
-            if (clothingRecommendationView.getAdapter() == null)
+            if (clothingRecommendationView != null && clothingRecommendationView.getAdapter() == null)
                 clothingRecommendationView.setAdapter(mClothingRecommendationAdapter);
             mClothingRecommendationAdapter.mRecommendedClothes = mClothes;
             mClothingRecommendationAdapter.notifyDataSetChanged();
         }
 
         TextView unitView = findViewById(R.id.tempUnit);
-        if (mPreferredUnit == Weather.CELSIUS)
-            unitView.setText(getString(R.string.tempUnitMetric));
-        else
-            unitView.setText(getString(R.string.tempUnitImperial));
+        if (unitView != null) {
+            if (mPreferredUnit == Weather.CELSIUS)
+                unitView.setText(getString(R.string.tempUnitMetric));
+            else
+                unitView.setText(getString(R.string.tempUnitImperial));
+        }
         mSwipeContainer.setRefreshing(false);
     }
 
@@ -460,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
                     boolean locationGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean internetGranted = grantResults.length > 1 && grantResults[1] == PackageManager.PERMISSION_GRANTED;
 
-                    if (locationGranted && internetGranted) {
+                    if (mUseGPS && locationGranted && internetGranted) {
                         UpdateLocationAndWeather();
                     } else if (internetGranted) {
                         // check if user has a specific location, otherwise, set to default (Boston)
@@ -620,6 +661,23 @@ public class MainActivity extends AppCompatActivity {
 
             public void Bind(String data) {
                 // TODO: set icon based on data
+                int id = 0;
+                if (data.contains("Beanie")) id = R.drawable.icons8_beanie_50;
+                if (data.contains("T-Shirt")) id = R.drawable.icons8_t_shirt_50;
+                if (data.contains("Hat")) id = R.drawable.icons8_baseball_cap_50;
+                if (data.contains("Sunglasses")) id = R.drawable.icons8_glasses_filled_50;
+                if (data.contains("Rain Jacket")) id = R.drawable.icons8_jacket_50;
+                if (data.contains("Winter Coat")) id = R.drawable.icons8_coat_50;
+                if (data.contains("Scarf")) id = R.drawable.icons8_scarf_50;
+                if (data.contains("Gloves")) id = R.drawable.icons8_mittens_50;
+                if (data.contains("Umbrella")) id = R.drawable.icons8_umbrella_50;
+                if (data.contains("Shorts")) id = R.drawable.icons8_shorts_50;
+                if (data.contains("Rain Boots")) id = R.drawable.icons8_boots_50;
+                if (data.contains("Snow Boots")) id = R.drawable.icons8_winter_boots_50;
+                if (data.contains("Sandals")) id = R.drawable.icons8_flip_flops_50;
+                if (data.contains("Sneakers")) id = R.drawable.icons8_trainers_50;
+
+                mIcon.setImageResource(id);
                 mClothingText.setText(data);
             }
         }

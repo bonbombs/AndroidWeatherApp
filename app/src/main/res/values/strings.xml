@@ -5,6 +5,7 @@
     <string name="title_settings">Settings</string>
     <string name="home_greeting">Hello, it is currently</string>
     <string name="hourly_forecast_title">Later in the day, it will be...</string>
+    <string name="clothing_recommend_title">Some clothing recommendations</string>
     <string name="degree_symbol">°</string>
     <string name="label_wind">Wind: </string>
     <string name="label_humidity">Humidity: </string>

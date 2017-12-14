@@ -112,9 +112,7 @@ public class TemperatureActivity extends AppCompatActivity {
 
                 mDatabase.child("temperature").child(userId).setValue(userTempPref);
 
-                // Intent to go to temperature preferences activity
-                Intent intent = new Intent(getApplicationContext(), TemperatureActivity.class);
-                startActivity(intent);
+                finish();
             }
         });
     }
