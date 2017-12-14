@@ -338,6 +338,8 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+
+                            RecommendationService.GetInstance().DetermineRecommendations(MainActivity.this);
                             UpdateHomeUI();
                         }
                     });
