@@ -17,7 +17,7 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.example.kelly.weatherapp.WeatherClient.API_KEY"
-            android:value="2be70096614a5f7120ab4f91929341ef" />
+            android:value="8ea4e42574e1501bf83babc8a39bd935" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDZzk_fouMnCGAT4FDz6xMJ-c_5JNmxzh0"/>

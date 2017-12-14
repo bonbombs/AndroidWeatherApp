@@ -458,8 +458,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitSettings() {
-        mSwipeContainer.setRefreshing( false );
-        mSwipeContainer.setEnabled( false );
         Switch unitSwitch = findViewById(R.id.settings_unit_pref);
         Switch gpsSwitch = findViewById(R.id.settings_use_gps);
         unitSwitch.setChecked(sharedPref.getBoolean(getString(R.string.preference_unit), true));
@@ -545,8 +543,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitNotifications() {
-        mSwipeContainer.setRefreshing( false );
-        mSwipeContainer.setEnabled( false );
         // Put in notification settings user already set / defaults
         Switch alarmSwitch = findViewById(R.id.notifications_alarms);
         CheckBox currentWeather = findViewById(R.id.current_weather);
@@ -678,16 +674,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitMainScreen() {
-        mSwipeContainer.setEnabled( true );
-        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                if (!mUseGPS)
-                    UpdateWeather();
-                else
-                    UpdateLocationAndWeather();
-            }
-        });
         mTempNowView = findViewById(R.id.temperatureNowView);
         mTempLocationView = findViewById(R.id.Location);
         mConditionView = findViewById(R.id.currentCondition);

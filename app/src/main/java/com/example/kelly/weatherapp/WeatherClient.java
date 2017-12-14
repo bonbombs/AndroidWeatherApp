@@ -1,5 +1,6 @@
 package com.example.kelly.weatherapp;
 
+import android.os.CountDownTimer;
 import android.util.Log;
 
 import com.google.android.gms.awareness.state.Weather;
@@ -46,7 +47,7 @@ public class WeatherClient {
     public static final int HOURLY_FORECAST = 1;
 
     // Time before client can actually make a another HTTP request call (in seconds)
-    public final long TIME_BEFORE_REPOLL = 1000L * 60;
+    public final long TIME_BEFORE_REPOLL = 1000L * 60 * 5;
 
     private static String API_KEY = "";
 
@@ -61,12 +62,41 @@ public class WeatherClient {
     private WeatherData cachedCurrentWeather;       // Cached weather data
     private List<WeatherData> cachedHourlyWeather;  // Cached weather data
 
+    private CountDownTimer mCurrentTimer;
+    private CountDownTimer mHourlyTimer;
+    private boolean mReadyForCurrent;
+    private boolean mReadyForHourly;
+
     // Map of all Listeners listening to our client for CurrentWeather updates
     private Dictionary<Integer, OnCurrentWeatherDataReceivedListener> onCurrentWeatherDataReceivedListeners;
     // Map of all Listeners listening to our client for HourlyWeather updates
     private Dictionary<Integer, OnHourlyWeatherDataReceivedListener> onHourlyWeatherDataReceivedListeners;
 
     private WeatherClient() {
+        mReadyForCurrent = true;
+        mReadyForHourly = true;
+        mCurrentTimer = new CountDownTimer(TIME_BEFORE_REPOLL, 10000) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            @Override
+            public void onFinish() {
+                mReadyForCurrent = true;
+            }
+        };
+        mHourlyTimer = new CountDownTimer(TIME_BEFORE_REPOLL, 10000) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            @Override
+            public void onFinish() {
+                mReadyForHourly = true;
+            }
+        };
         mClient = new OkHttpClient();
         mCurrentCity = "4930956";
         mCurrentConfig = new WeatherConfig(mCurrentCity);
@@ -76,7 +106,7 @@ public class WeatherClient {
         onHourlyWeatherDataReceivedListeners = new Hashtable<>();
         //TODO: NOT SECURE
         if (API_KEY.isEmpty())
-            API_KEY = "2be70096614a5f7120ab4f91929341ef";
+            API_KEY = "8ea4e42574e1501bf83babc8a39bd935";
     }
 
     /**
@@ -207,11 +237,14 @@ public class WeatherClient {
                     );
                 }
                 currentWeather.timeCalculated = listItem.getLong("dt");
+
                 hourlyWeather.add(currentWeather);
             }
             cachedHourlyWeather = hourlyWeather;
             // Done updating. Config is no longer dirty
             mCurrentConfig.isDirty = false;
+            mHourlyTimer.start();
+            mReadyForHourly = false;
             // Send success with corresponding data to listeners
             EmitHourlyWeatherDataUpdateSuccess(hourlyWeather);
         }
@@ -282,6 +315,8 @@ public class WeatherClient {
             }
             currentWeather.timeCalculated = json.getLong("dt");
             cachedCurrentWeather = currentWeather;
+            mReadyForCurrent = false;
+            mCurrentTimer.start();
             // Done updating. Config is no longer dirty
             mCurrentConfig.isDirty = false;
             // Send success with corresponding data to listeners
@@ -365,13 +400,7 @@ public class WeatherClient {
         /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
             data until a time threshold
         */
-        if (client.cachedCurrentWeather != null && !client.mCurrentConfig.isDirty) {
-            long timeBefore = client.cachedCurrentWeather.timeCalculated;
-            if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
-                client.CallRequest();
-            }
-        }
-        else {
+         if(GetInstance().mReadyForCurrent || GetInstance().mCurrentConfig.isDirty) {
             // Set request mode so we can generate the correct request URL
             client.mCurrentConfig.setRequestMode(RequestMode.CURRENT);
             client.CallRequest();
@@ -389,13 +418,7 @@ public class WeatherClient {
         /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
             data until a time threshold
         */
-        if (client.cachedHourlyWeather != null && !client.mCurrentConfig.isDirty) {
-            long timeBefore = client.cachedCurrentWeather.timeCalculated;
-            if (System.currentTimeMillis() - GetInstance().TIME_BEFORE_REPOLL > timeBefore) {
-                client.CallRequest();
-            }
-        }
-        else {
+        if (GetInstance().mReadyForHourly || GetInstance().mCurrentConfig.isDirty) {
             // Set request mode so we can generate the correct request URL
             client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
             client.CallRequest();
