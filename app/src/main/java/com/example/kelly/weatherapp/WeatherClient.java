@@ -106,7 +106,7 @@ public class WeatherClient {
         onHourlyWeatherDataReceivedListeners = new Hashtable<>();
         //TODO: NOT SECURE
         if (API_KEY.isEmpty())
-            API_KEY = "8ea4e42574e1501bf83babc8a39bd935";
+            API_KEY = "018963b8acbb92d1e5e5aba02f294355";
     }
 
     /**
@@ -455,6 +455,13 @@ public class WeatherClient {
             GetInstance().onCurrentWeatherDataReceivedListeners.remove(id);
         if (GetInstance().onHourlyWeatherDataReceivedListeners.get(id) != null)
             GetInstance().onHourlyWeatherDataReceivedListeners.remove(id);
+    }
+
+    public static void resetTimers() {
+        GetInstance().mCurrentTimer.cancel();
+        GetInstance().mHourlyTimer.cancel();
+        GetInstance().mReadyForHourly = true;
+        GetInstance().mReadyForCurrent = true;
     }
 
     /**

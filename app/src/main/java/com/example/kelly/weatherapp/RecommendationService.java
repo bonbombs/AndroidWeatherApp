@@ -157,6 +157,10 @@ public class RecommendationService {
                             //Log.e("RecommendationService", "onDataChange: " + item.getKey() + " " + item.getValue());
                             mClothingMap.put(item.getKey(), 0);
                             List<Integer> conditions = GetConditionsFromClothing(item.getKey());
+                            if (mCurrentWeather == null) {
+                                mWardrobeRecommendations = new ArrayList<>();
+                                return;
+                            }
                             for (Condition c : mCurrentWeather.getConditionsData()) {
                                 if (conditions.contains(c.State)) {
                                     mClothingMap.put(item.getKey(), mClothingMap.get(item.getKey()) + 1);

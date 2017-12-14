@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -54,8 +53,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         sharedPref.edit().putBoolean(getString(R.string.preference_use_gps), mUseGPS).apply();
         sharedPref.edit().putBoolean(getString(R.string.preference_unit), (mPreferredUnit == Weather.CELSIUS)).apply();
         WeatherClient.removeListeners(MAIN_ACTIVITY_LISTENER_ID);
+        WeatherClient.resetTimers();
         super.onPause();
     }
 
