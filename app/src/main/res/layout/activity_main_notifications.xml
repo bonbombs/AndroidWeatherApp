@@ -146,11 +146,6 @@
                     android:layout_height="wrap_content"
                     android:text="Clothing recommendations" />
 
-                <CheckBox
-                    android:id="@+id/significant_changes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Significant changes in weather" />
             </LinearLayout>
 
             <Space

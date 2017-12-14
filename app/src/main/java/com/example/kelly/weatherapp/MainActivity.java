@@ -301,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
         Switch alarmSwitch = findViewById(R.id.notifications_alarms);
         CheckBox currentWeather = findViewById(R.id.current_weather);
         CheckBox clothingRecommendations = findViewById(R.id.clothing_recommendations);
-        CheckBox significantChanges = findViewById(R.id.significant_changes);
+        //CheckBox significantChanges = findViewById(R.id.significant_changes);
         TextView alarmFrequency = findViewById(R.id.alarm_frequency);
         final TextView beginningTime = findViewById(R.id.beginning_time);
         final TextView endTime = findViewById(R.id.end_time);
@@ -310,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
         alarmSwitch.setChecked(sharedPref.getBoolean("notifications_alarms", false));
         currentWeather.setChecked(sharedPref.getBoolean("notifications_current_weather", true));
         clothingRecommendations.setChecked(sharedPref.getBoolean("notifications_clothing_recommendations", false));
-        significantChanges.setChecked(sharedPref.getBoolean("notifications_significant_changes", false));
+        //significantChanges.setChecked(sharedPref.getBoolean("notifications_significant_changes", false));
         alarmFrequency.setText(sharedPref.getString("notifications_alarm_frequency", "Never"));
         beginningTime.setText(sharedPref.getString("notifications_beginning_time", "12:00AM"));
         endTime.setText(sharedPref.getString("notifications_end_time", "12:00PM"));
@@ -336,12 +336,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        significantChanges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        /*significantChanges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 sharedPref.edit().putBoolean("notifications_significant_changes", b).apply();
             }
-        });
+        });*/
 
         LinearLayout alarmNotifications = findViewById(R.id.notifications_alarm_hours);
         alarmNotifications.setOnClickListener(new View.OnClickListener() {
