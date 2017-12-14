@@ -51,6 +51,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
@@ -143,10 +144,9 @@ public class MainActivity extends AppCompatActivity {
         switch(newType) {
             case HOME:
                 InitMainScreen();
-                UpdateHomeUI();
                 break;
             case NOTIFICATIONS:
-                //TODO: Logic & UI for Notifications
+                InitNotifications();
                 break;
             case SETTINGS:
                 InitSettings();
@@ -156,32 +156,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause(){
-        final SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        final SharedPreferences sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
         if (mCachedPlace != null)
             sharedPref.edit().putString(getString(R.string.preference_location), mCachedPlace.getId()).apply();
         sharedPref.edit().putBoolean(getString(R.string.preference_use_gps), mUseGPS).apply();
+        sharedPref.edit().putBoolean(getString(R.string.preference_unit), (mPreferredUnit == Weather.CELSIUS)).apply();
         WeatherClient.removeListeners(MAIN_ACTIVITY_LISTENER_ID);
         super.onPause();
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        // Init general app logic here
-        super.onCreate(savedInstanceState);
-        updateValuesFromBundle(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+    protected void onResume() {
         sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
 
-        mSwipeContainer = findViewById(R.id.swipeContainer);
-        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                UpdateWeather();
-            }
-        });
-
-        final SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         boolean unit = sharedPref.getBoolean(getString(R.string.preference_unit), true);
         mUseGPS = sharedPref.getBoolean(getString(R.string.preference_use_gps), true);
         String placeId = sharedPref.getString(getString(R.string.preference_location), "");
@@ -189,6 +176,92 @@ public class MainActivity extends AppCompatActivity {
         else mPreferredUnit = Weather.FAHRENHEIT;
 
         WeatherClient.GetConfig().useGPS = mUseGPS;
+
+        checkPermissions();
+
+        mClient = WeatherClient.GetInstance();
+
+        // When we receive updated data on current weather from WeatherClient
+        mClient.addOnCurrentWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
+            @Override
+            public void onDataLoaded(WeatherData data) {
+                if (data != null) {
+                    mCurrentWeatherData = data;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            RecommendationService.GetInstance().DetermineRecommendations(MainActivity.this);
+                            UpdateHomeUI();
+                        }
+                    });
+                }
+            }
+            @Override
+            public void onDataError(Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+        // When we receive updated data on hourly forecasts from WeatherClient
+        mClient.addOnHourlyWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnHourlyWeatherDataReceivedListener() {
+            @Override
+            public void onDataLoaded(List<WeatherData> data) {
+                if (data != null) {
+                    mHourlyWeatherData = data;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            UpdateHomeUI();
+                        }
+                    });
+                }
+            }
+            @Override
+            public void onDataError(Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+        RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
+            @Override
+            public void onDataSuccess(Set<String> data, Map<String, Integer> map) {
+                List<String> clothes = new ArrayList<>();
+                for (String dataItem : data) {
+                    if (map.get(dataItem) > 0) {
+                        String displayName = dataItem.substring(2);
+                        if (dataItem.equals("isTshirt"))
+                            displayName = "T-Shirt";
+                        if (dataItem.equals("isRainJacket"))
+                            displayName = "Rain Jacket";
+                        if (dataItem.equals("isWinterCoat"))
+                            displayName = "Winter Coat";
+                        if (dataItem.equals("isRainBoots"))
+                            displayName = "Rain Boots";
+                        if (dataItem.equals("isSnowBoots"))
+                            displayName = "Snow Boots";
+                        clothes.add(displayName);
+                    }
+                }
+                mClothes = clothes;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        UpdateHomeUI();
+                    }
+                });
+            }
+        });
+
+        mSwipeContainer = findViewById(R.id.swipeContainer);
+        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (!mUseGPS)
+                    UpdateWeather();
+                else
+                    UpdateLocationAndWeather();
+            }
+        });
 
         if (!placeId.isEmpty()) {
             Places.getGeoDataClient(this, null).getPlaceById(placeId).addOnCompleteListener(new OnCompleteListener<PlaceBufferResponse>() {
@@ -199,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
                         final Place myPlace = places.get(0);
                         Log.i(TAG, "Place found: " + myPlace.getName());
                         mCachedPlace = myPlace.freeze();
+                        sharedPref.edit().putString(getString(R.string.preference_location), mCachedPlace.getId()).apply();
                         if (!mUseGPS) {
                             LatLng loc = mCachedPlace.getLatLng();
                             WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
@@ -220,6 +294,156 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        else {
+            UpdateLocationAndWeather();
+        }
+
+        // Init View object containing our 3 displays
+        mCurrentViewContainer = findViewById(R.id.activity_main_container);
+
+        // Init bottom navbar
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+        super.onResume();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Init general app logic here
+        super.onCreate(savedInstanceState);
+        updateValuesFromBundle(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        sharedPref = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
+
+        boolean unit = sharedPref.getBoolean(getString(R.string.preference_unit), true);
+        mUseGPS = sharedPref.getBoolean(getString(R.string.preference_use_gps), true);
+        String placeId = sharedPref.getString(getString(R.string.preference_location), "");
+        if (unit) mPreferredUnit = Weather.CELSIUS;
+        else mPreferredUnit = Weather.FAHRENHEIT;
+
+        WeatherClient.GetConfig().useGPS = mUseGPS;
+
+        checkPermissions();
+
+        mClient = WeatherClient.GetInstance();
+
+        // When we receive updated data on current weather from WeatherClient
+        mClient.addOnCurrentWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
+            @Override
+            public void onDataLoaded(WeatherData data) {
+                if (data != null) {
+                    mCurrentWeatherData = data;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            UpdateHomeUI();
+                        }
+                    });
+                }
+            }
+            @Override
+            public void onDataError(Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+        // When we receive updated data on hourly forecasts from WeatherClient
+        mClient.addOnHourlyWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnHourlyWeatherDataReceivedListener() {
+            @Override
+            public void onDataLoaded(List<WeatherData> data) {
+                if (data != null) {
+                    mHourlyWeatherData = data;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            UpdateHomeUI();
+                        }
+                    });
+                }
+            }
+            @Override
+            public void onDataError(Throwable t) {
+                t.printStackTrace();
+            }
+        });
+
+        RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
+            @Override
+            public void onDataSuccess(Set<String> data, Map<String, Integer> map) {
+                List<String> clothes = new ArrayList<>();
+                for (String dataItem : data) {
+                    if (map.get(dataItem) > 0) {
+                        String displayName = dataItem.substring(2);
+                        if (dataItem.equals("isTshirt"))
+                            displayName = "T-Shirt";
+                        if (dataItem.equals("isRainJacket"))
+                            displayName = "Rain Jacket";
+                        if (dataItem.equals("isWinterCoat"))
+                            displayName = "Winter Coat";
+                        if (dataItem.equals("isRainBoots"))
+                            displayName = "Rain Boots";
+                        if (dataItem.equals("isSnowBoots"))
+                            displayName = "Snow Boots";
+                        clothes.add(displayName);
+                    }
+                }
+                mClothes = clothes;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        UpdateHomeUI();
+                    }
+                });
+            }
+        });
+
+        mSwipeContainer = findViewById(R.id.swipeContainer);
+        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (!mUseGPS)
+                    UpdateWeather();
+                else
+                    UpdateLocationAndWeather();
+            }
+        });
+
+        if (!placeId.isEmpty()) {
+            Places.getGeoDataClient(this, null).getPlaceById(placeId).addOnCompleteListener(new OnCompleteListener<PlaceBufferResponse>() {
+                @Override
+                public void onComplete(@NonNull Task<PlaceBufferResponse> task) {
+                    if (task.isSuccessful()) {
+                        PlaceBufferResponse places = task.getResult();
+                        final Place myPlace = places.get(0);
+                        Log.i(TAG, "Place found: " + myPlace.getName());
+                        mCachedPlace = myPlace.freeze();
+                        sharedPref.edit().putString(getString(R.string.preference_location), mCachedPlace.getId()).apply();
+                        if (!mUseGPS) {
+                            LatLng loc = mCachedPlace.getLatLng();
+                            WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
+                            UpdateWeather();
+                        }
+                        else {
+                            UpdateLocationAndWeather();
+                        }
+                        places.release();
+                    } else {
+                        Log.e(TAG, "Place not found.");
+                        if (!mUseGPS) {
+                            UpdateWeather();
+                        }
+                        else {
+                            UpdateLocationAndWeather();
+                        }
+                    }
+                }
+            });
+        }
+        else {
+            UpdateLocationAndWeather();
+        }
 
         // Init View object containing our 3 displays
         mCurrentViewContainer = findViewById(R.id.activity_main_container);
@@ -234,26 +458,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitSettings() {
+        mSwipeContainer.setRefreshing( false );
+        mSwipeContainer.setEnabled( false );
         Switch unitSwitch = findViewById(R.id.settings_unit_pref);
         Switch gpsSwitch = findViewById(R.id.settings_use_gps);
         unitSwitch.setChecked(sharedPref.getBoolean(getString(R.string.preference_unit), true));
         gpsSwitch.setChecked(sharedPref.getBoolean(getString(R.string.preference_use_gps), true));
-        LinearLayout tempPrefBar = findViewById(R.id.settings_temp_pref);
-        LinearLayout wardrobePrefBar = findViewById(R.id.settings_wardrobe_pref);
-
-        tempPrefBar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO: Hook Temp Prefs
-            }
-        });
-
-        wardrobePrefBar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO: Hook Wardrobe Prefs
-            }
-        });
 
         unitSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -278,12 +488,16 @@ public class MainActivity extends AppCompatActivity {
                     if (mCachedPlace != null) {
                         TextView locationView = findViewById(R.id.settings_location_prefs);
                         locationView.setText(mCachedPlace.getName());
-                        if (!mUseGPS) {
-                            LatLng loc = mCachedPlace.getLatLng();
-                            WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
-                            UpdateWeather();
-                        }
+                        LatLng loc = mCachedPlace.getLatLng();
+                        WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
+                        UpdateWeather();
                     }
+                }
+                // Update location if we changed it from a fragment
+                TextView locationView = findViewById(R.id.settings_location_prefs);
+                String useGPS = (mUseGPS) ? "Use GPS, " : "";
+                if (mCachedPlace != null) {
+                    locationView.setText(useGPS + mCachedPlace.getName());
                 }
             }
         });
@@ -331,6 +545,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitNotifications() {
+        mSwipeContainer.setRefreshing( false );
+        mSwipeContainer.setEnabled( false );
         // Put in notification settings user already set / defaults
         Switch alarmSwitch = findViewById(R.id.notifications_alarms);
         CheckBox currentWeather = findViewById(R.id.current_weather);
@@ -462,14 +678,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitMainScreen() {
-        mClient = WeatherClient.GetInstance();
+        mSwipeContainer.setEnabled( true );
+        mSwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (!mUseGPS)
+                    UpdateWeather();
+                else
+                    UpdateLocationAndWeather();
+            }
+        });
         mTempNowView = findViewById(R.id.temperatureNowView);
         mTempLocationView = findViewById(R.id.Location);
         mConditionView = findViewById(R.id.currentCondition);
         mHumidityView = findViewById(R.id.humidityView);
         mWindView = findViewById(R.id.windView);
         mWeatherIconView = findViewById(R.id.weather_icon);
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
 
         LinearLayoutManager layoutManagerWeather
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
@@ -483,95 +708,25 @@ public class MainActivity extends AppCompatActivity {
         hourlyWeatherView.setLayoutManager(layoutManagerWeather);
         clothingRecommendationView.setLayoutManager(layoutManagerClothing);
 
-        checkPermissions();
-
-        // When we receive updated data on current weather from WeatherClient
-        mClient.addOnCurrentWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
-            @Override
-            public void onDataLoaded(WeatherData data) {
-                mCurrentWeatherData = data;
-                if (data != null) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            UpdateHomeUI();
-                        }
-                    });
-                }
-            }
-            @Override
-            public void onDataError(Throwable t) {
-                t.printStackTrace();
-            }
-        });
-
-        // When we receive updated data on hourly forecasts from WeatherClient
-        mClient.addOnHourlyWeatherDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new WeatherClient.OnHourlyWeatherDataReceivedListener() {
-            @Override
-            public void onDataLoaded(List<WeatherData> data) {
-                mHourlyWeatherData = data;
-                if (data != null) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            UpdateHomeUI();
-                        }
-                    });
-                }
-            }
-            @Override
-            public void onDataError(Throwable t) {
-                t.printStackTrace();
-            }
-        });
-
-        RecommendationService.addOnWardrobeUpdateDataReceivedListener(MAIN_ACTIVITY_LISTENER_ID, new RecommendationService.OnWardrobeUpdateDataReceivedListener() {
-            @Override
-            public void onDataSuccess(Set<String> data, Map<String, Integer> map) {
-                List<String> clothes = new ArrayList<>();
-                for (String dataItem : data) {
-                    if (map.get(dataItem) > 0) {
-                        String displayName = dataItem.substring(2);
-                        if (dataItem.equals("isTshirt"))
-                            displayName = "T-Shirt";
-                        if (dataItem.equals("isRainJacket"))
-                            displayName = "Rain Jacket";
-                        if (dataItem.equals("isWinterCoat"))
-                            displayName = "Winter Coat";
-                        if (dataItem.equals("isRainBoots"))
-                            displayName = "Rain Boots";
-                        if (dataItem.equals("isSnowBoots"))
-                            displayName = "Snow Boots";
-                        clothes.add(displayName);
-                    }
-                }
-                mClothes = clothes;
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        UpdateHomeUI();
-                    }
-                });
-            }
-        });
-
-        if (mUseGPS)
-            UpdateLocationAndWeather();
-        else
+        if (!mUseGPS) {
             UpdateWeather();
-        RecommendationService.GetInstance().DetermineRecommendations(this);
+        }
+        else {
+            UpdateLocationAndWeather();
+        }
+        UpdateHomeUI();
     }
 
     private void UpdateHomeUI() {
-        // Skip if we aren't on the home screen
-        //if (mCurrentView != MainViewType.HOME) return;
         if (mCurrentWeatherData != null) {
             mTempNowView.setText(String.format("%.0f", mCurrentWeatherData.getTemperature(mPreferredUnit)));
             mTempLocationView.setText(mCurrentWeatherData.getCityName());
             String windSpeedUnit = "";
-            if (mPreferredUnit == Weather.CELSIUS) windSpeedUnit = getString(R.string.windSpeedUnitMetric);
-            else getString(R.string.windSpeedUnitImperial);
-            mWindView.setText(String.format("%.2f %s %.2f deg", mCurrentWeatherData.getWindSpeed(), windSpeedUnit, mCurrentWeatherData.getWindDeg()));
+            if (mPreferredUnit == Weather.CELSIUS)
+                windSpeedUnit = getString(R.string.windSpeedUnitMetric);
+            else if (mPreferredUnit == Weather.FAHRENHEIT)
+                windSpeedUnit = getString(R.string.windSpeedUnitImperial);
+            mWindView.setText(String.format("%.2f %s", mCurrentWeatherData.getWindSpeed(), windSpeedUnit));
             mHumidityView.setText(String.format("%d%%", mCurrentWeatherData.getHumidity()));
             mConditionView.setText(mCurrentWeatherData.getConditionsData().get(0).ConditionDesc);
             mWeatherIconView.setImageResource(mCurrentWeatherData.getConditionsData().get(0).mIconId);
@@ -628,6 +783,7 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.ACCESS_FINE_LOCATION);
 
         if (internetCheck == PackageManager.PERMISSION_GRANTED && locationCheck == PackageManager.PERMISSION_GRANTED) {
+            mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
             UpdateLocationAndWeather();
         } else {
             ActivityCompat.requestPermissions(this,
@@ -645,7 +801,9 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0) {
                     boolean locationGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean internetGranted = grantResults.length > 1 && grantResults[1] == PackageManager.PERMISSION_GRANTED;
-
+                    if (locationGranted) {
+                        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+                    }
                     if (mUseGPS && locationGranted && internetGranted) {
                         UpdateLocationAndWeather();
                     } else if (internetGranted) {
@@ -669,6 +827,7 @@ public class MainActivity extends AppCompatActivity {
                 Place place = PlaceAutocomplete.getPlace(this, data);
                 Log.i(TAG, "Place: " + place.getName());
                 mCachedPlace = place;
+                sharedPref.edit().putString(getString(R.string.preference_location), mCachedPlace.getId()).apply();
                 if (!mUseGPS) {
                     LatLng loc = mCachedPlace.getLatLng();
                     WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);

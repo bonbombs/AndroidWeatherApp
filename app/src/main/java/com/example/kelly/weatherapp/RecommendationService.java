@@ -45,27 +45,20 @@ public class RecommendationService {
     private Dictionary<Integer, Float> mSeverityMap;
     private WeatherData mCurrentWeather;
     private List<WeatherData> mHourlyWeather;
-    private List<String> mRecommendationEvaluator;
     private Map<String, Integer> mClothingMap;
     private UserTemperature mTemperaturePreference;
 
-    private List<String> DummyWardrobeRecommendations;
+    private List<String> mWardrobeRecommendations;
     private Dictionary<Integer, OnWardrobeUpdateDataReceivedListener> onWardrobeUpdateDataDataReceivedListeners;
 
     //TODO: Class or data structure for wardrobe
     //TODO: Class for temp prefs
 
     private RecommendationService() {
+        mWardrobeRecommendations = new ArrayList<>();
         onWardrobeUpdateDataDataReceivedListeners = new Hashtable<>();
-        mRecommendationEvaluator = new ArrayList<>();
-
         ConstructWeatherListeners();
         ConstructSeverityMap();
-
-        DummyWardrobeRecommendations = new ArrayList<>();
-        DummyWardrobeRecommendations.add("Hat");
-        DummyWardrobeRecommendations.add("Socks");
-        DummyWardrobeRecommendations.add("Boots");
     }
 
     private void ConstructWeatherListeners() {
@@ -73,20 +66,7 @@ public class RecommendationService {
             @Override
             public void onDataLoaded(WeatherData data) {
                 mCurrentWeather = data;
-                UpdateRecommendations();
-            }
-
-            @Override
-            public void onDataError(Throwable t) {
-
-            }
-        });
-
-        WeatherClient.addOnHourlyWeatherDataReceivedListener(RECOMMENDATION_SERVICE_LISTENERID, new WeatherClient.OnHourlyWeatherDataReceivedListener() {
-            @Override
-            public void onDataLoaded(List<WeatherData> data) {
-                mHourlyWeather = data;
-                UpdateRecommendations();
+                helper_GetTemperaturePreferences();
             }
 
             @Override
@@ -112,8 +92,6 @@ public class RecommendationService {
     }
 
     private float CalculateWeatherSeverity(WeatherData data) {
-        // Get Firebase database reference using google-services.json file
-        mDatabase = FirebaseDatabase.getInstance().getReference();
         List<Condition> conditions = data.getConditionsData();
         float total = 0f;
         for (Condition c : conditions) {
@@ -123,7 +101,6 @@ public class RecommendationService {
     }
 
     public void DetermineRecommendations(Activity context) {
-        // TODO
         mHourlyWeather = WeatherClient.GetHourlyWeather();
         mCurrentWeather = WeatherClient.GetCurrentWeather();
 
@@ -131,31 +108,10 @@ public class RecommendationService {
         helper_GetTemperaturePreferences();
     }
 
-    private void UpdateRecommendations() {
-        // TODO Temp Pref Section
-        // (1) Check current temp to see if it's past thresholds
-
-        // (2) Else if weather conditions in next N hours has drastically changed, alert
-        //      Check current weather heuristic
-        // TODO Wardrobe Rec Section
-        // Always recommend a list, unless they never checked off anything
-        if (mCurrentWeather != null && mHourlyWeather != null) {
-            float currentSeverity = CalculateWeatherSeverity(mCurrentWeather);
-            for (int i = 0; i < MAX_3HOURS_LOOK_AHEAD; i++) {
-                WeatherData data = mHourlyWeather.get(i);
-                float lookAhead = CalculateWeatherSeverity(data);
-                if (lookAhead - currentSeverity > mSeverityThreshold) {
-                    //TODO setup alert w/ details on this hour's forecast
-                }
-            }
-        }
-
-        // (3) Else if weather temps in next N hours is past threshold, alert
-    }
-
     private void helper_GetTemperaturePreferences() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        SharedPreferences prefs = mContext.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        if (mContext == null) return;
+        SharedPreferences prefs = mContext.getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
         String userId = prefs.getString("uuid", "");
         if (!userId.isEmpty()) {
             mDatabase.child("temperature").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -186,7 +142,8 @@ public class RecommendationService {
 
     private void helper_GetWardrobeRecommendation() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        SharedPreferences prefs = mContext.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        if (mContext == null) return;
+        SharedPreferences prefs = mContext.getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
         String userId = prefs.getString("uuid", "");
         if (!userId.isEmpty()) {
             mDatabase.child("clothing").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -211,7 +168,25 @@ public class RecommendationService {
                             }
                         }
                     }
+                    // Sort so that items that have the most hits w/r/t conditions and temperature are shown
                     mClothingMap = sortByValue(mClothingMap);
+                    mWardrobeRecommendations = new ArrayList<>();
+                    for (String dataItem : mClothingMap.keySet()) {
+                        if (mClothingMap.get(dataItem) > 0) {
+                            String displayName = dataItem.substring(2);
+                            if (dataItem.equals("isTshirt"))
+                                displayName = "T-Shirt";
+                            if (dataItem.equals("isRainJacket"))
+                                displayName = "Rain Jacket";
+                            if (dataItem.equals("isWinterCoat"))
+                                displayName = "Winter Coat";
+                            if (dataItem.equals("isRainBoots"))
+                                displayName = "Rain Boots";
+                            if (dataItem.equals("isSnowBoots"))
+                                displayName = "Snow Boots";
+                            mWardrobeRecommendations.add(displayName);
+                        }
+                    }
                     EmitOnWardrobeUpdateSuccess(mClothingMap.keySet(), mClothingMap);
                 }
 
@@ -221,8 +196,15 @@ public class RecommendationService {
         }
     }
 
+    /**
+     * If the current temp is past what our user has set as hot/cold or is past the default values
+     * return the types of clothing associated
+     * @param tempPrefs
+     * @return
+     */
     public List<String> GetClothingFromTemperature (UserTemperature tempPrefs) {
         List<String> result = new ArrayList<>();
+        // Firebase data is stored in Fahrenheit so always get that temp value
 
         if (mCurrentWeather.getTemperature(Weather.FAHRENHEIT) > tempPrefs.isHot
                 || mCurrentWeather.getTemperature(Weather.FAHRENHEIT) > 80) {
@@ -243,10 +225,20 @@ public class RecommendationService {
                     "isGloves"
             });
         }
-
+        else {
+            result = Arrays.asList(new String[] {
+                    "isSneakers",
+                    "isTshirt"
+            });
+        }
         return result;
     }
 
+    /**
+     * Get all weather conditions associated with given clothing
+     * @param clothing
+     * @return
+     */
     public List<Integer> GetConditionsFromClothing (String clothing) {
         List<Integer> result = new ArrayList<>();
         if (clothing.equals("isGloves")) {
@@ -290,21 +282,7 @@ public class RecommendationService {
 
 
     public static List<String> GetRecommendedWardrobe() {
-        // TODO Return value subject to change
-        return GetInstance().DummyWardrobeRecommendations;
-    }
-
-    public static String GetAlert() {
-        return "";
-    }
-
-    public static void UpdateTemperaturePreferences() {
-        //TODO
-    }
-
-    public static void UpdateWardrobePreferences() {
-        //TODO
-
+        return GetInstance().mWardrobeRecommendations;
     }
 
     public static RecommendationService GetInstance() {

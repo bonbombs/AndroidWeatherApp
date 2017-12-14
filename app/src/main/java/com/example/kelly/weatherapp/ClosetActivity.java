@@ -69,7 +69,7 @@ public class ClosetActivity extends AppCompatActivity implements
 
         // Get Firebase database reference using google-services.json file
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        mSharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        mSharedPreferences = getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
 
         mWinterCoatButton = findViewById(R.id.button_wintercoat);
         mRainJacketButton = findViewById(R.id.button_rainjacket);
@@ -96,7 +96,6 @@ public class ClosetActivity extends AppCompatActivity implements
             mDatabase.child("clothing").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    Iterator<DataSnapshot> items = dataSnapshot.getChildren().iterator();
                     UserClothing data = dataSnapshot.getValue(UserClothing.class);
                     if (data == null) return;
                     if (data.isWinterCoat == null) data.isWinterCoat = false;
@@ -108,11 +107,11 @@ public class ClosetActivity extends AppCompatActivity implements
                     else if (data.isHat == null) data.isHat = false;
                     else if (data.isSunglasses == null) data.isSunglasses = false;
                     else if (data.isTshirt == null) data.isTshirt = false;
-                    else if (data.isShorts) data.isShorts = false;
-                    else if (data.isRainBoots) data.isRainBoots = false;
-                    else if (data.isSnowBoots) data.isSnowBoots = false;
-                    else if (data.isSandals) data.isSandals = false;
-                    else if (data.isSneakers) data.isSneakers = false;
+                    else if (data.isShorts == null) data.isShorts = false;
+                    else if (data.isRainBoots == null) data.isRainBoots = false;
+                    else if (data.isSnowBoots == null) data.isSnowBoots = false;
+                    else if (data.isSandals == null) data.isSandals = false;
+                    else if (data.isSneakers == null) data.isSneakers = false;
 
                     setChecked(data);
                 }
@@ -152,7 +151,7 @@ public class ClosetActivity extends AppCompatActivity implements
                 }
 
                 mDatabase.child("clothing").child(userId).setValue(userClothingPref);
-
+                RecommendationService.GetInstance().DetermineRecommendations(ClosetActivity.this);
                 finish();
             }
         });

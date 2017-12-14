@@ -258,10 +258,15 @@ public class WeatherClient {
             currentWeather.setCloud(
                     cloudInfo.getInt("all")
             );
-            currentWeather.setWind(
-                    (float) windInfo.getDouble("speed"),
-                    (float) windInfo.getDouble("deg")
-            );
+
+            float windSpeed = -1;
+            float windDeg = -1;
+            if (windInfo.has("speed"))
+                windSpeed = (float) windInfo.getDouble("speed");
+            if (windInfo.has("deg"))
+                windDeg = (float) windInfo.getDouble("deg");
+
+            currentWeather.setWind(windSpeed, windDeg);
 
             if (json.has("rain")) {
                 JSONObject rainInfo = json.getJSONObject("rain");

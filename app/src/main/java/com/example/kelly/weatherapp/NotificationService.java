@@ -3,6 +3,7 @@ package com.example.kelly.weatherapp;
 import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -124,6 +125,18 @@ public class NotificationService extends Service {
         Log.d("NOTIFICATION", "");
         NotificationManager notif = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        // Notification brings user to app on click
+        Intent showTaskIntent = new Intent(getApplicationContext(), MainActivity.class);
+        showTaskIntent.setAction(Intent.ACTION_MAIN);
+        showTaskIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        showTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                getApplicationContext(),
+                0,
+                showTaskIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
         // Change the icon based on the condition, sun by default
         switch (conditions.get(0).ConditionName) {
             case "sunny":
@@ -152,6 +165,8 @@ public class NotificationService extends Service {
                                     "Condition: " + conditions.get(0).ConditionName + "\n" +
                                     "Clothing: " + clothes))
                     .setSmallIcon(icon)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
                     .build();
         }
         // User wants only clothing recommendations in notification
@@ -163,6 +178,8 @@ public class NotificationService extends Service {
                     .setStyle(new Notification.BigTextStyle()
                             .bigText("Clothing: " + clothes))
                     .setSmallIcon(icon)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
                     .build();
         }
         // User wants only current weather in notification
@@ -175,6 +192,8 @@ public class NotificationService extends Service {
                             .bigText("Current Temp: " + temp + " F" + "\n" +
                                     "Condition: " + conditions.get(0).ConditionName))
                     .setSmallIcon(icon)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
                     .build();
         }
         // User doesn't want anything in notification, for some reason???
@@ -184,6 +203,8 @@ public class NotificationService extends Service {
                     .setContentTitle("Weather App")
                     .setContentText("Check the weather!")
                     .setSmallIcon(icon)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(contentIntent)
                     .build();
         }
 

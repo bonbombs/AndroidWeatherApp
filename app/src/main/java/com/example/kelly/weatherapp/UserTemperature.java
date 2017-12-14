@@ -11,8 +11,8 @@ public class UserTemperature {
 
     public UserTemperature() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
-        isHot = Integer.MAX_VALUE;
-        isCold = Integer.MIN_VALUE;
+        isHot = 40;
+        isCold = 10;
     }
 
     public UserTemperature(Integer hotTemp, Integer coldTemp) {
