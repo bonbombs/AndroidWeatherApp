@@ -356,6 +356,7 @@ public class WeatherClient {
      */
     public static WeatherData GetCurrentWeather() {
         WeatherClient client = GetInstance();
+        client.mCurrentConfig.setRequestMode(RequestMode.CURRENT);
         /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
             data until a time threshold
         */
@@ -379,6 +380,7 @@ public class WeatherClient {
      */
     public static List<WeatherData> GetHourlyWeather() {
         WeatherClient client = GetInstance();
+        client.mCurrentConfig.setRequestMode(RequestMode.HOURLY);
         /*  Ideally, we don't want to continuously poll for new data so figure out a way to use cached
             data until a time threshold
         */

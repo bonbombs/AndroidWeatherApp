@@ -1,11 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TOOOOODOOOOOO" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/notifications_alarm_hours"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/setting_option_margin"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/alarm_hours"
+                    android:layout_width="254dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Notify me"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/alarm_frequency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="Never"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/notifications_alarms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/setting_option_margin"
+                android:checked="true"
+                android:contentDescription="Choose if you want notifications after an alarm goes off"
+                android:splitTrack="false"
+                android:switchMinWidth="14dp"
+                android:switchPadding="14dp"
+                android:switchTextAppearance="@style/TextAppearance.AppCompat"
+                android:text="Notify me after alarms"
+                android:textSize="18sp" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <LinearLayout
+                android:id="@+id/notifications_alarms_between"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/setting_option_margin"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/alarm_between_hours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Notify me after alarms between"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_margin="@dimen/setting_option_margin"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/beginning_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="12:00AM"
+                        android:textAppearance="@style/TextAppearance.AppCompat" />
+
+                    <TextView
+                        android:id="@+id/textView6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="and"
+                        android:textAppearance="@style/TextAppearance.AppCompat"
+                        tools:layout_editor_absoluteX="416dp"
+                        tools:layout_editor_absoluteY="170dp" />
+
+                    <TextView
+                        android:id="@+id/end_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="12:00PM"
+                        android:textAppearance="@style/TextAppearance.AppCompat" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/notifications_about"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/setting_option_margin"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/notify_me_about"
+                    android:layout_width="254dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Notify me about:"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:textSize="18sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_marginLeft="20dp">
+
+                <CheckBox
+                    android:id="@+id/current_weather"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Current weather" />
+
+                <CheckBox
+                    android:id="@+id/clothing_recommendations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Clothing recommendations" />
+
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
 </android.support.constraint.ConstraintLayout>

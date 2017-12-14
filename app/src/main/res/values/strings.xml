@@ -25,4 +25,6 @@
     <string name="default_city_id">4930956</string>
 
     <string name="prompt_city_input">Type in a city name</string>
+
+    <string name="title_activity_alarm_broadcast_receiver">AlarmBroadcastReceiver</string>
 </resources>
