@@ -227,7 +227,7 @@
     </android.support.v7.widget.RecyclerView>
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/noClothesText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -243,13 +243,11 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/clothingRecommendationView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="80dp"
         android:layout_gravity="center"
         android:foregroundGravity="center"
         android:orientation="horizontal"
         android:scrollbars="horizontal"
-        tools:listitem="@layout/clothing_recommendation_item_view">
-
-    </android.support.v7.widget.RecyclerView>
+        tools:listitem="@layout/clothing_recommendation_item_view"></android.support.v7.widget.RecyclerView>
 
 </LinearLayout>

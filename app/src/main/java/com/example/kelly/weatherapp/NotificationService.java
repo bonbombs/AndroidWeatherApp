@@ -11,17 +11,25 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.awareness.state.Weather;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceBufferResponse;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.List;
+
+import static android.content.ContentValues.TAG;
 
 public class NotificationService extends Service {
 
@@ -51,6 +59,7 @@ public class NotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         mUseGPS = sharedPref.getBoolean(getString(R.string.preference_use_gps), false);
+        WeatherClient.resetTimers();
 
         if (mUseGPS) {
             mClient = WeatherClient.GetInstance();
@@ -71,12 +80,62 @@ public class NotificationService extends Service {
 
             UpdateLocationAndWeather();
         }
+        else {
+            mClient.addOnCurrentWeatherDataReceivedListener(NOTIFICATION_SERVICE_LISTENER_ID, new WeatherClient.OnCurrentWeatherDataReceivedListener() {
+                @Override
+                public void onDataLoaded(WeatherData data) {
+                    mCurrentWeatherData = data;
+                    if (data != null) {
+                        updateWeatherData();
+                    }
+                }
+                @Override
+                public void onDataError(Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+            String placeId = sharedPref.getString(getString(R.string.preference_location), "");
+            if (!placeId.isEmpty()) {
+                Places.getGeoDataClient(this, null).getPlaceById(placeId).addOnCompleteListener(new OnCompleteListener<PlaceBufferResponse>() {
+                    @Override
+                    public void onComplete(@NonNull Task<PlaceBufferResponse> task) {
+                        if (task.isSuccessful()) {
+                            PlaceBufferResponse places = task.getResult();
+                            final Place myPlace = places.get(0);
+                            Log.i(TAG, "Place found: " + myPlace.getName());
+                            sharedPref.edit().putString(getString(R.string.preference_location), myPlace.getId()).apply();
+                            if (!mUseGPS) {
+                                LatLng loc = myPlace.getLatLng();
+                                WeatherClient.GetConfig().setLocation(loc.longitude, loc.latitude);
+                                UpdateWeather();
+                            }
+                            else {
+                                UpdateLocationAndWeather();
+                            }
+                            places.release();
+                        } else {
+                            Log.e(TAG, "Place not found.");
+                            if (mUseGPS) {
+                                UpdateWeather();
+                            }
+                            else {
+                                UpdateLocationAndWeather();
+                            }
+                        }
+                    }
+                });
+            }
+        }
         return START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private void UpdateWeather() {
+        mCurrentWeatherData = WeatherClient.GetCurrentWeather();
     }
 
     /**

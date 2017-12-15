@@ -1,7 +1,6 @@
 package com.example.kelly.weatherapp;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +30,10 @@ public class TemperatureActivity extends AppCompatActivity {
     private SeekBar coldSeekBar;
     private TextView hotProgress;
     private TextView coldProgress;
+    private TextView hotMinView;
+    private TextView hotMaxView;
+    private TextView coldMinView;
+    private TextView coldMaxView;
     private int mUnit;
 
     private Integer isHot;
@@ -58,6 +61,10 @@ public class TemperatureActivity extends AppCompatActivity {
         doneButton = findViewById(R.id.button_done);
         coldSeekBar = (SeekBar)findViewById(R.id.seekBarCold); // make seekbar object
         coldProgress = (TextView)findViewById(R.id.coldBarProgress);
+        coldMaxView = findViewById(R.id.coldMaxView);
+        coldMinView = findViewById(R.id.coldMinView);
+        hotMaxView = findViewById(R.id.hotMaxView);
+        hotMinView = findViewById(R.id.hotMinView);
 
 
         String userId = mSharedPreferences.getString("uuid", "");
@@ -71,10 +78,18 @@ public class TemperatureActivity extends AppCompatActivity {
                 float valCold = (isCold.intValue() - 32f) / 1.8f;
                 hotProgress.setText(String.format("%.0f°C", valHot));
                 coldProgress.setText(String.format("%.0f°C", valCold));
+                hotMinView.setText("4°C");
+                hotMaxView.setText("32°C");
+                coldMinView.setText("-12°C");
+                coldMaxView.setText("15°C");
             }
             else {
                 hotProgress.setText(String.format("%d°F", isHot));
                 coldProgress.setText(String.format("%d°F", isCold));
+                hotMinView.setText("40°F");
+                hotMaxView.setText("90°F");
+                coldMinView.setText("10°F");
+                coldMaxView.setText("60°F");
             }
             hotSeekBar.setProgress(isHot - 40);
             coldSeekBar.setProgress(isCold - 10);
@@ -102,10 +117,19 @@ public class TemperatureActivity extends AppCompatActivity {
                         float valCold = (isCold.intValue() - 32f) / 1.8f;
                         hotProgress.setText(String.format("%.0f°C", valHot));
                         coldProgress.setText(String.format("%.0f°C", valCold));
+                        hotMinView.setText("4°C");
+                        hotMaxView.setText("32°C");
+                        coldMinView.setText("-12°C");
+                        coldMaxView.setText("15°C");
                     }
                     else {
                         hotProgress.setText(String.format("%d°F", isHot));
                         coldProgress.setText(String.format("%d°F", isCold));
+                        hotMinView.setText("40°F");
+                        hotMaxView.setText("90°F");
+                        coldMinView.setText("10°F");
+                        coldMaxView.setText("60°F");
+
                     }
                     hotSeekBar.setProgress(isHot - 40);
                     coldSeekBar.setProgress(isCold - 10);

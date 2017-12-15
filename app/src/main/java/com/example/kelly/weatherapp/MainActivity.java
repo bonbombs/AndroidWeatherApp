@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
     private HourlyWeatherAdapter mHourlyWeatherAdapter;
     private ClothingRecommendationsAdapter mClothingRecommendationAdapter;
     private SwipeRefreshLayout mSwipeContainer;
+    private TextView noClothes;
 
     private WeatherClient mClient;
 
@@ -680,7 +681,7 @@ public class MainActivity extends AppCompatActivity {
         mHumidityView = findViewById(R.id.humidityView);
         mWindView = findViewById(R.id.windView);
         mWeatherIconView = findViewById(R.id.weather_icon);
-
+        noClothes = findViewById(R.id.noClothesText);
 
         LinearLayoutManager layoutManagerWeather
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
@@ -735,7 +736,16 @@ public class MainActivity extends AppCompatActivity {
             if (clothingRecommendationView != null && clothingRecommendationView.getAdapter() == null)
                 clothingRecommendationView.setAdapter(mClothingRecommendationAdapter);
             mClothingRecommendationAdapter.mRecommendedClothes = mClothes;
+            if (mClothes.size() > 0) {
+                noClothes.setText(getString(R.string.clothing_recommend_title));
+            } else {
+
+                noClothes.setText("No clothes to recommend! Check your settings.");
+            }
             mClothingRecommendationAdapter.notifyDataSetChanged();
+        }
+        else {
+            noClothes.setText("No clothes to recommend! Check your settings.");
         }
 
         TextView unitView = findViewById(R.id.tempUnit);
